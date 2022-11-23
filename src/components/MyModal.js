@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Modal from "react-bootstrap/Modal";
@@ -15,8 +16,6 @@ function MyModal({
   editStatus,
   handleDelete,
 }) {
-
-
   return (
     <>
       <Modal
@@ -33,9 +32,9 @@ function MyModal({
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
               <Form.Label>Start time</Form.Label>
               <Form.Control
-                type="email"
+                type="text"
+                onFocus={(e) => (e.target.type = "datetime-local")}
                 placeholder={startDate.toLocaleString("en-US")}
-                disabled
                 style={{ wordSpacing: "3px" }}
               />
             </Form.Group>
@@ -43,7 +42,7 @@ function MyModal({
             <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
               <Form.Label>End Time</Form.Label>
               <Form.Control
-                type="email"
+                type="date"
                 placeholder={endDate.toLocaleString("en-US")}
                 style={{ wordSpacing: "3px" }}
                 disabled
