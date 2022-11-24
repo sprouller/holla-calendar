@@ -7,12 +7,15 @@ import axios from "axios";
 //dnd calendar
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { useEffect } from "react";
+import { addJobToTable } from "../controller/Airtable";
 const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(Calendar);
 
 // react BasicCalendar component
 const BasicCalendar = () => {
   const [events, setEvents] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [employees, setEmployees] = useState([]);
 
   //states for creating event
   const [modalStatus, setModalStatus] = useState(false);
@@ -34,7 +37,6 @@ const BasicCalendar = () => {
         },
       }).then((response) => {
         const fetchedEvents = response.data.records;
-        console.log(fetchedEvents);
 
         const formattedEvents = fetchedEvents.map((event) => {
           const { client_name, job_name, employee_first_name } = event.fields;
@@ -49,6 +51,56 @@ const BasicCalendar = () => {
         setEvents(...events, formattedEvents);
       });
     }
+
+    function fetchClients() {
+      const clientsTableId = process.env.REACT_APP_CLIENTS_TABLE_ID;
+      axios({
+        method: "get",
+        url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${clientsTableId}`,
+        headers: {
+          authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+        },
+      }).then((response) => {
+        const fetchedClients = response.data.records;
+
+        const formattedClients = fetchedClients.map((client) => {
+          const { name, client_since, jobs } = client.fields;
+          return {
+            id: client.id,
+            name,
+            jobs,
+            client_since,
+          };
+        });
+        setClients(...clients, formattedClients);
+      });
+    }
+    function fetchEmployees() {
+      const employeesTableId = process.env.REACT_APP_EMPLOYEES_TABLE_ID;
+      axios({
+        method: "get",
+        url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${employeesTableId}`,
+        headers: {
+          authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+        },
+      }).then((response) => {
+        const fetchedEmployees = response.data.records;
+
+        const formattedEmployees = fetchedEmployees.map((employee) => {
+          const { first_name, surname, colour, jobs } = employee.fields;
+          return {
+            id: employee.id,
+            first_name,
+            surname,
+            colour,
+            jobs,
+          };
+        });
+        setEmployees(...employees, formattedEmployees);
+      });
+    }
+    fetchEmployees();
+    fetchClients();
     fetchEvents();
   }, []);
 
@@ -61,19 +113,30 @@ const BasicCalendar = () => {
     setEventInput(e.target.value);
   };
 
-  const handleSave = () => {
-    setModalStatus(false);
-    if (eventInput) {
-      setEvents([
-        ...events,
-        {
-          id: Date.now(),
-          title: `${eventInput}`,
-          start: new Date(`${startDate}`),
-          end: new Date(`${endDate}`),
-        },
-      ]);
-    }
+  const handleSave = (
+    start,
+    end,
+    title,
+    jobName,
+    client,
+    employee,
+    timeAllocated
+  ) => {
+    // POST data to airTable
+    addJobToTable(
+      start,
+      end,
+      title,
+      jobName,
+      client,
+      employee,
+      timeAllocated
+    ).then((addedEvent) => {
+      console.log("added event: ", addedEvent);
+      setModalStatus(false);
+      // setResult(result => [...result, response]);
+      setEvents((events) => [...events, addedEvent]);
+    });
   };
 
   //slot select handler
@@ -168,6 +231,10 @@ const BasicCalendar = () => {
     setEventInput("");
   };
 
+  console.log("events: ", events);
+  console.log("clients: ", clients);
+  console.log("employees: ", employees);
+
   return (
     <div className="my-calendar">
       <DnDCalendar
@@ -200,6 +267,8 @@ const BasicCalendar = () => {
         handleEdited={handleEdited}
         editStatus={editStatus}
         handleDelete={handleDelete}
+        clients={clients}
+        employees={employees}
       />
     </div>
   );
