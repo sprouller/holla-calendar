@@ -1,7 +1,13 @@
 import { useState } from "react";
+import moment from "moment";
+import "moment-timezone";
+
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Modal from "react-bootstrap/Modal";
+import { useEffect } from "react";
+
+//moment.tz.setDefault("Etc/GMT");
 
 function MyModal({
   modalStatus,
@@ -28,6 +34,19 @@ function MyModal({
   const [employee, setEmployee] = useState("");
   const [timeAllocated, setTimeAllocated] = useState(0);
 
+  useEffect(() => {
+    setStart(getStartDateText());
+    setEnd(getEndDateText());
+  }, [startDate, endDate]);
+
+  const getStartDateText = () => {
+    return moment.utc(startDate).format("MM/DD/YYYY");
+  };
+
+  const getEndDateText = () => {
+    return moment.utc(endDate).format("MM/DD/YYYY");
+  };
+
   return (
     <>
       <Modal
@@ -48,12 +67,11 @@ function MyModal({
               <Form.Control
                 type="text"
                 onFocus={(e) => (e.target.type = "date")}
-                onChange={(e) => setStart(e.target.value)}
-                placeholder={
-                  editStatus
-                    ? new Date(event.start).toLocaleString("en-US")
-                    : startDate.toLocaleString("en-US")
-                }
+                onChange={(e) => {
+                  setStart(e.target.value);
+                }}
+                defaultValue={getStartDateText()}
+                placeholder={getStartDateText()}
                 style={{ wordSpacing: "3px" }}
               />
             </Form.Group>
@@ -64,11 +82,8 @@ function MyModal({
                 type="text"
                 onChange={(e) => setEnd(e.target.value)}
                 onFocus={(e) => (e.target.type = "date")}
-                placeholder={
-                  editStatus
-                    ? new Date(event.end).toLocaleString("en-US")
-                    : endDate.toLocaleString("en-US")
-                }
+                defaultValue={getEndDateText()}
+                placeholder={getEndDateText()}
                 style={{ wordSpacing: "3px" }}
               />
             </Form.Group>
@@ -157,23 +172,6 @@ function MyModal({
                 />
               </Form.Group>
             }
-
-            {/* for editing created event  */}
-            {/* {editStatus && (
-              <Form.Group
-                className="mb-3"
-                controlId="exampleForm.ControlTextarea1"
-              >
-                <Form.Label>Event title</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  value={eventInput}
-                  onChange={handleEditEvent}
-                  style={{ boxShadow: "none" }}
-                />
-              </Form.Group>
-            )} */}
           </Form>
         </Modal.Body>
         <Modal.Footer>

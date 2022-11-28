@@ -19,6 +19,7 @@ export function fetchEvents() {
         title: displayTitle,
         start: event.fields.start_date,
         end: event.fields.end_date,
+        allDay: true,
         jobName: event.fields.job_name,
         client: {
           id: event.fields.client[0],
@@ -101,6 +102,7 @@ export const addJobToTable = (
       employee: [employee],
     },
   };
+  console.log("job to add to table", job);
   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
   return axios({
     method: "post",

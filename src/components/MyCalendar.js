@@ -1,8 +1,8 @@
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
+import "moment-timezone";
 import { useState } from "react";
 import MyModal from "./MyModal";
-import axios from "axios";
 
 //dnd calendar
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
@@ -15,8 +15,8 @@ import {
   fetchEmployees,
   fetchEvents,
 } from "../controller/Airtable";
+// moment.tz.setDefault("Etc/GMT");
 const localizer = momentLocalizer(moment);
-const DnDCalendar = withDragAndDrop(Calendar);
 
 // react BasicCalendar component
 const BasicCalendar = () => {
@@ -181,19 +181,27 @@ const BasicCalendar = () => {
   // console.log("clients: ", clients);
   // console.log("employees: ", employees);
 
-  const event =
+  const selectedEvent =
     events.length &&
     events.find((event) => {
       return event.id === eventId;
     });
 
+  console.log("events: ", events);
+
   return (
     <div className="my-calendar">
-      <DnDCalendar
+      <Calendar
         localizer={localizer}
         events={events}
         startAccessor="start"
-        endAccessor="end"
+        endAccessor={(e) => {
+          if (!e) return "end";
+          const addOneDay = new Date();
+          addOneDay.setDate(new Date(e.end).getDate() + 1);
+          return addOneDay;
+        }}
+        allDayAccessor={true}
         selectable
         //event trigger after clicking any slot
         onSelectSlot={handleSlotSelectEvent}
@@ -215,7 +223,7 @@ const BasicCalendar = () => {
         startDate={startDate}
         endDate={endDate}
         eventInput={eventInput}
-        event={event}
+        event={selectedEvent}
         handleEditEvent={handleEditEvent}
         handleEdited={handleEdited}
         editStatus={editStatus}
