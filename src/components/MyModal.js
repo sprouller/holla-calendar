@@ -8,6 +8,8 @@ function MyModal({
   handleClose,
   handleSave,
   handleChange,
+  eventId,
+  event,
   startDate,
   endDate,
   eventInput,
@@ -47,7 +49,11 @@ function MyModal({
                 type="text"
                 onFocus={(e) => (e.target.type = "date")}
                 onChange={(e) => setStart(e.target.value)}
-                placeholder={startDate.toLocaleString("en-US")}
+                placeholder={
+                  editStatus
+                    ? new Date(event.start).toLocaleString("en-US")
+                    : startDate.toLocaleString("en-US")
+                }
                 style={{ wordSpacing: "3px" }}
               />
             </Form.Group>
@@ -58,28 +64,16 @@ function MyModal({
                 type="text"
                 onChange={(e) => setEnd(e.target.value)}
                 onFocus={(e) => (e.target.type = "date")}
-                placeholder={endDate.toLocaleString("en-US")}
+                placeholder={
+                  editStatus
+                    ? new Date(event.end).toLocaleString("en-US")
+                    : endDate.toLocaleString("en-US")
+                }
                 style={{ wordSpacing: "3px" }}
               />
             </Form.Group>
 
-            {/* for creating  new event */}
-            {!editStatus && (
-              <Form.Group
-                className="mb-3"
-                controlId="exampleForm.ControlTextarea1"
-              >
-                <Form.Label>Event title</Form.Label>
-                <Form.Control
-                  type="textarea"
-                  rows={3}
-                  onChange={(e) => setTitle(e.target.value)}
-                  style={{ boxShadow: "none" }}
-                />
-              </Form.Group>
-            )}
-
-            {!editStatus && (
+            {
               <Form.Group
                 className="mb-3"
                 controlId="exampleForm.ControlInput3"
@@ -88,19 +82,21 @@ function MyModal({
                 <Form.Control
                   type="text"
                   onChange={(e) => setJobName(e.target.value)}
-                  placeholder={"Job Name"}
+                  defaultValue={editStatus ? event.jobName : ""}
+                  placeholder={editStatus ? event.title : "Job Name"}
                   style={{ wordSpacing: "3px" }}
                 />
               </Form.Group>
-            )}
+            }
 
-            {!editStatus && (
+            {
               <Form.Group
                 className="mb-3"
                 controlId="exampleForm.ControlInput3"
               >
                 <Form.Label>Client</Form.Label>
                 <Form.Select
+                  defaultValue={editStatus ? event.client.id : ""}
                   onChange={(e) => {
                     setClient(e.target.value);
                   }}
@@ -117,15 +113,16 @@ function MyModal({
                     })}
                 </Form.Select>
               </Form.Group>
-            )}
+            }
 
-            {!editStatus && (
+            {
               <Form.Group
                 className="mb-3"
                 controlId="exampleForm.ControlInput3"
               >
                 <Form.Label>Employee</Form.Label>
                 <Form.Select
+                  defaultValue={editStatus ? event.employee.id : ""}
                   onChange={(e) => {
                     setEmployee(e.target.value);
                   }}
@@ -142,9 +139,9 @@ function MyModal({
                     })}
                 </Form.Select>
               </Form.Group>
-            )}
+            }
 
-            {!editStatus && (
+            {
               <Form.Group
                 className="mb-3"
                 controlId="exampleForm.ContorolInputTimeAllocated"
@@ -152,16 +149,17 @@ function MyModal({
                 <Form.Label>Time Allocated</Form.Label>
                 <Form.Control
                   type="number"
+                  defaultValue={editStatus ? event.timeAllocated : ""}
                   onChange={(e) => setTimeAllocated(e.target.value)}
                   placeholder={"5"}
                   min={0}
                   style={{ wordSpacing: "3px" }}
                 />
               </Form.Group>
-            )}
+            }
 
             {/* for editing created event  */}
-            {editStatus && (
+            {/* {editStatus && (
               <Form.Group
                 className="mb-3"
                 controlId="exampleForm.ControlTextarea1"
@@ -175,7 +173,7 @@ function MyModal({
                   style={{ boxShadow: "none" }}
                 />
               </Form.Group>
-            )}
+            )} */}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -206,7 +204,6 @@ function MyModal({
                 handleSave(
                   start,
                   end,
-                  title,
                   jobName,
                   client,
                   employee,
@@ -227,7 +224,20 @@ function MyModal({
           {editStatus && (
             <Button
               variant="success"
-              onClick={handleEdited}
+              onClick={() => {
+                handleEdited(
+                  start || event.start,
+                  end || event.end,
+                  jobName || event.jobName,
+                  client || event.client.id,
+                  employee || event.employee.id,
+                  timeAllocated || event.timeAllocated
+                );
+                setStart("");
+                setEnd("");
+                setTitle("");
+                setJobName("");
+              }}
               style={{ boxShadow: "none" }}
             >
               Save Changes
