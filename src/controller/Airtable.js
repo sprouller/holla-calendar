@@ -158,6 +158,17 @@ export const editJobInTable = (
   });
 };
 
+export const deleteJobFromTable = (id) => {
+  const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
+  return axios({
+    method: "delete",
+    url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${jobsTableId}/${id}`,
+    headers: {
+      authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+    },
+  });
+};
+
 //response.data
 /*
 "records": [

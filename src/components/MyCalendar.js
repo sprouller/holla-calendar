@@ -9,6 +9,7 @@ import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { useEffect } from "react";
 import {
   addJobToTable,
+  deleteJobFromTable,
   editJobInTable,
   fetchClients,
   fetchEmployees,
@@ -114,14 +115,14 @@ const BasicCalendar = () => {
 
   // on delete event handler
   const handleDelete = () => {
-    let updatedEvents = [];
-    updatedEvents = events.filter((e) => {
-      return e.id !== eventId;
+    deleteJobFromTable(eventId).then((_) => {
+      fetchEvents().then((updatedEvents) => {
+        setEvents([...updatedEvents]);
+        setModalStatus(false);
+        setEditStatus(false);
+        setEventInput("");
+      });
     });
-    setEvents([...updatedEvents]);
-    setModalStatus(false);
-    setEditStatus(false);
-    setEventInput("");
   };
 
   //slot select handler

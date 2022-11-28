@@ -14,5 +14,6 @@ add a .env and link up airtable info
 
 ### TODO
 
-[ ] editStatus does not reset once you've clicked in to editing an event. I.e. once you try to edit an event you can no longer create a new event. \
+[X] editStatus does not reset once you've clicked in to editing an event. I.e. once you try to edit an event you can no longer create a new event. \
 [ ] timezones mess up so added events show up one day later than the day you actually add them \
+e.g. when I add a day it goes into airtable as 4pm PST (=12am GMT).
