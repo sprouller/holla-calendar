@@ -102,7 +102,6 @@ export const addJobToTable = (
       employee: [employee],
     },
   };
-  console.log("job to add to table", job);
   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
   return axios({
     method: "post",
@@ -148,7 +147,6 @@ export const editJobInTable = (
       employee: [employee],
     },
   };
-  console.log(job);
   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
   return axios({
     method: "patch",
