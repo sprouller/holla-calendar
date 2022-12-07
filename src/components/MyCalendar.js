@@ -1,15 +1,22 @@
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
+import "moment-timezone";
 import { useState } from "react";
 import MyModal from "./MyModal";
-import axios from "axios";
 
 //dnd calendar
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { useEffect } from "react";
-import { addJobToTable } from "../controller/Airtable";
+import {
+  addJobToTable,
+  deleteJobFromTable,
+  editJobInTable,
+  fetchClients,
+  fetchEmployees,
+  fetchEvents,
+} from "../controller/Airtable";
+// moment.tz.setDefault("Etc/GMT");
 const localizer = momentLocalizer(moment);
-const DnDCalendar = withDragAndDrop(Calendar);
 
 // react BasicCalendar component
 const BasicCalendar = () => {
@@ -27,85 +34,20 @@ const BasicCalendar = () => {
   const [editStatus, setEditStatus] = useState(false);
 
   useEffect(() => {
-    function fetchEvents() {
-      const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
-      axios({
-        method: "get",
-        url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${jobsTableId}`,
-        headers: {
-          authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-        },
-      }).then((response) => {
-        const fetchedEvents = response.data.records;
-
-        const formattedEvents = fetchedEvents.map((event) => {
-          const { client_name, job_name, employee_first_name } = event.fields;
-          const displayTitle = `Client: ${client_name} | Job: ${job_name} | ${employee_first_name}`;
-          return {
-            id: event.id,
-            title: displayTitle,
-            start: new Date(event.fields.start_date),
-            end: new Date(event.fields.end_date),
-          };
-        });
-        setEvents(...events, formattedEvents);
-      });
-    }
-
-    function fetchClients() {
-      const clientsTableId = process.env.REACT_APP_CLIENTS_TABLE_ID;
-      axios({
-        method: "get",
-        url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${clientsTableId}`,
-        headers: {
-          authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-        },
-      }).then((response) => {
-        const fetchedClients = response.data.records;
-
-        const formattedClients = fetchedClients.map((client) => {
-          const { name, client_since, jobs } = client.fields;
-          return {
-            id: client.id,
-            name,
-            jobs,
-            client_since,
-          };
-        });
-        setClients(...clients, formattedClients);
-      });
-    }
-    function fetchEmployees() {
-      const employeesTableId = process.env.REACT_APP_EMPLOYEES_TABLE_ID;
-      axios({
-        method: "get",
-        url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${employeesTableId}`,
-        headers: {
-          authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-        },
-      }).then((response) => {
-        const fetchedEmployees = response.data.records;
-
-        const formattedEmployees = fetchedEmployees.map((employee) => {
-          const { first_name, surname, colour, jobs } = employee.fields;
-          return {
-            id: employee.id,
-            first_name,
-            surname,
-            colour,
-            jobs,
-          };
-        });
-        setEmployees(...employees, formattedEmployees);
-      });
-    }
-    fetchEmployees();
-    fetchClients();
-    fetchEvents();
+    fetchEvents().then((eventsFromAirtable) => {
+      setEvents(...events, eventsFromAirtable);
+    });
+    fetchClients().then((clientsFromAirtable) => {
+      setClients(...clients, clientsFromAirtable);
+    });
+    fetchEmployees().then((employeesFromAirtable) => {
+      setEmployees(...employees, employeesFromAirtable);
+    });
   }, []);
 
   const handleClose = () => {
     setModalStatus(false);
+    setEditStatus(false);
     setEventInput("");
   };
 
@@ -131,11 +73,55 @@ const BasicCalendar = () => {
       client,
       employee,
       timeAllocated
-    ).then((addedEvent) => {
-      console.log("added event: ", addedEvent);
-      setModalStatus(false);
-      // setResult(result => [...result, response]);
-      setEvents((events) => [...events, addedEvent]);
+    ).then((_) => {
+      fetchEvents().then((updatedEvents) => {
+        setEvents([...updatedEvents]);
+        setModalStatus(false);
+      });
+
+      //setEvents((events) => [...events, addedEvent]);
+    });
+  };
+
+  const handleEditEvent = (e) => {
+    setEventInput(e.target.value);
+  };
+
+  const handleEdited = (
+    start,
+    end,
+    jobName,
+    client,
+    employee,
+    timeAllocated
+  ) => {
+    editJobInTable(
+      eventId,
+      start,
+      end,
+      jobName,
+      client,
+      employee,
+      timeAllocated
+    ).then((_) => {
+      fetchEvents().then((updatedEvents) => {
+        setEvents([...updatedEvents]);
+        setModalStatus(false);
+        setEditStatus(false);
+        setEventInput("");
+      });
+    });
+  };
+
+  // on delete event handler
+  const handleDelete = () => {
+    deleteJobFromTable(eventId).then((_) => {
+      fetchEvents().then((updatedEvents) => {
+        setEvents([...updatedEvents]);
+        setModalStatus(false);
+        setEditStatus(false);
+        setEventInput("");
+      });
     });
   };
 
@@ -191,57 +177,31 @@ const BasicCalendar = () => {
     setModalStatus(true);
   };
 
-  const handleEditEvent = (e) => {
-    setEventInput(e.target.value);
-  };
-  const handleEdited = (e) => {
-    setModalStatus(false);
-    let updatedEvents = [];
-    if (eventInput) {
-      updatedEvents = events.filter((e) => {
-        return e.id !== eventId;
-      });
-      setEvents([
-        ...updatedEvents,
-        {
-          id: `${eventId}`,
-          title: `${eventInput}`,
-          start: new Date(`${startDate}`),
-          end: new Date(`${endDate}`),
-        },
-      ]);
-    } else {
-      updatedEvents = events.filter((e) => {
-        return e.id !== eventId;
-      });
-      setEvents([...updatedEvents]);
-    }
-    setEditStatus(false);
-    setEventInput("");
-  };
+  // console.log("events: ", events);
+  // console.log("clients: ", clients);
+  // console.log("employees: ", employees);
 
-  // on delete event handler
-  const handleDelete = () => {
-    let updatedEvents = [];
-    updatedEvents = events.filter((e) => {
-      return e.id !== eventId;
+  const selectedEvent =
+    events.length &&
+    events.find((event) => {
+      return event.id === eventId;
     });
-    setEvents([...updatedEvents]);
-    setModalStatus(false);
-    setEventInput("");
-  };
 
   console.log("events: ", events);
-  console.log("clients: ", clients);
-  console.log("employees: ", employees);
 
   return (
     <div className="my-calendar">
-      <DnDCalendar
+      <Calendar
         localizer={localizer}
         events={events}
         startAccessor="start"
-        endAccessor="end"
+        endAccessor={(e) => {
+          if (!e) return "end";
+          const addOneDay = new Date();
+          addOneDay.setDate(new Date(e.end).getDate() + 1);
+          return addOneDay;
+        }}
+        allDayAccessor={true}
         selectable
         //event trigger after clicking any slot
         onSelectSlot={handleSlotSelectEvent}
@@ -263,6 +223,7 @@ const BasicCalendar = () => {
         startDate={startDate}
         endDate={endDate}
         eventInput={eventInput}
+        event={selectedEvent}
         handleEditEvent={handleEditEvent}
         handleEdited={handleEdited}
         editStatus={editStatus}
