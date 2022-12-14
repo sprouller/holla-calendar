@@ -9,11 +9,13 @@ import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { useEffect } from "react";
 import {
   addJobToTable,
+  addTimeToTimeTrackingTable,
   deleteJobFromTable,
   editJobInTable,
   fetchClients,
   fetchEmployees,
   fetchEvents,
+  fetchTimeTrackingInfoByJobId,
 } from "../controller/Airtable";
 
 // moment.tz.setDefault("Etc/GMT");
@@ -72,8 +74,6 @@ const BasicCalendar = () => {
     }
   }
 
-  // detect if shift key is being held down
-
   const handleClose = () => {
     setModalStatus(false);
     setAddEventModalStatus(false);
@@ -83,6 +83,10 @@ const BasicCalendar = () => {
   };
 
   const handleChange = (e) => {
+    setEventInput(e.target.value);
+  };
+
+  const handleEditEvent = (e) => {
     setEventInput(e.target.value);
   };
 
@@ -103,16 +107,24 @@ const BasicCalendar = () => {
           setEvents([...updatedEvents]);
           setAddEventModalStatus(false);
         });
-
         //setEvents((events) => [...events, addedEvent]);
       }
     );
   };
 
-  const handleEditEvent = (e) => {
-    setEventInput(e.target.value);
+  const handleAddTimeToJob = (jobId, date, hours) => {
+    console.log("handleAddTimeToJob");
+    console.log({ jobId, date, hours });
+    addTimeToTimeTrackingTable(jobId, date, hours).then((_) => {
+      // fetchEvents().then((updatedEvents) => {
+      //   setEvents([...updatedEvents]);
+      //   setAddEventModalStatus(false);
+      // });
+      console.log("finished adding time");
+    });
   };
 
+  // handles editing an event
   const handleEdited = (
     start,
     end,
@@ -139,7 +151,7 @@ const BasicCalendar = () => {
     });
   };
 
-  // on delete event handler
+  // handles deleting an event
   const handleDelete = () => {
     deleteJobFromTable(eventId).then((_) => {
       fetchEvents().then((updatedEvents) => {
@@ -151,23 +163,13 @@ const BasicCalendar = () => {
     });
   };
 
-  //slot select handler
+  // handles when a day is clicked (without event)
   const handleSlotSelectEvent = (slotInfo) => {
     setStartDate(new Date(`${slotInfo.start}`));
     setEndDate(new Date(`${slotInfo.end}`));
     setAddEventModalStatus(true);
     setEventInput("");
   };
-
-  /*
-start,
-    end,
-    title,
-    jobName,
-    client,
-    employee,
-    timeAllocated
-  */
 
   //move event handler
   const moveEventHandler = ({ event, start, end }) => {
@@ -187,7 +189,6 @@ start,
         employee.id,
         timeAllocated
       );
-      // setEvents([...events, eventDuplicate]);
     }
   };
 
@@ -291,9 +292,9 @@ start,
       <ViewEventModal
         viewEventModalStatus={viewEventModalStatus}
         handleClose={handleClose}
-        startDate={startDate}
-        endDate={endDate}
         event={selectedEvent}
+        employees={employees}
+        handleAddTimeToJob={handleAddTimeToJob}
       />
     </div>
   );
