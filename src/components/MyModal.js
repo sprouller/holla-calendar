@@ -40,11 +40,18 @@ function MyModal({
   }, [startDate, endDate]);
 
   const getStartDateText = () => {
-    return moment.utc(startDate).format("MM/DD/YYYY");
+    return moment.utc(startDate).format("DD/MM/YYYY");
   };
 
   const getEndDateText = () => {
-    return moment.utc(endDate).format("MM/DD/YYYY");
+    return moment.utc(endDate).format("DD/MM/YYYY");
+  };
+
+  const convertDateForAirtable = (dateStrDDMMYYYY) => {
+    var dateParts = dateStrDDMMYYYY.split("/");
+    // month is 0-based, that's why we need dataParts[1] - 1
+    var dateObject = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
+    return dateObject;
   };
 
   return (
@@ -200,8 +207,8 @@ function MyModal({
               variant="success"
               onClick={() => {
                 handleSave(
-                  start,
-                  end,
+                  convertDateForAirtable(start).toLocaleDateString(),
+                  convertDateForAirtable(end).toLocaleDateString(),
                   jobName,
                   client,
                   employee,

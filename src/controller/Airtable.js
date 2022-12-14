@@ -91,6 +91,8 @@ export const addJobToTable = (
   employee,
   timeAllocated
 ) => {
+  console.log(`addJobToTable`);
+  console.log({ start, end, jobName, client, employee, timeAllocated });
   const job = {
     fields: {
       job_name: jobName,
@@ -102,6 +104,7 @@ export const addJobToTable = (
       employee: [employee],
     },
   };
+  console.log({ job });
   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
   return axios({
     method: "post",

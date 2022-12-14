@@ -3,8 +3,8 @@ import moment from "moment";
 import "moment-timezone";
 import { useState } from "react";
 import MyModal from "./MyModal";
-
-//dnd calendar
+import AddEventModal from "./AddEventModal";
+import ViewEventModal from "./ViewEventModal";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { useEffect } from "react";
 import {
@@ -15,8 +15,11 @@ import {
   fetchEmployees,
   fetchEvents,
 } from "../controller/Airtable";
+
 // moment.tz.setDefault("Etc/GMT");
 const localizer = momentLocalizer(moment);
+
+const DnDCalendar = withDragAndDrop(Calendar);
 
 // react BasicCalendar component
 const BasicCalendar = () => {
@@ -25,6 +28,8 @@ const BasicCalendar = () => {
   const [employees, setEmployees] = useState([]);
 
   //states for creating event
+  const [addEventModalStatus, setAddEventModalStatus] = useState(false);
+  const [viewEventModalStatus, setViewEventModalStatus] = useState(false);
   const [modalStatus, setModalStatus] = useState(false);
   const [eventInput, setEventInput] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -32,6 +37,7 @@ const BasicCalendar = () => {
   //state for on select event
   const [eventId, setEventId] = useState("");
   const [editStatus, setEditStatus] = useState(false);
+  const [altKeyDown, setAltKeyDown] = useState(false);
 
   useEffect(() => {
     fetchEvents().then((eventsFromAirtable) => {
@@ -45,8 +51,33 @@ const BasicCalendar = () => {
     });
   }, []);
 
+  // Attach event listeners to the window object to listen for keydown and keyup events
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", handleKeyUp);
+
+  // Event handler for keydown events
+  function handleKeyDown(event) {
+    // If the shift key is pressed, update the state
+    if (event.key === "Alt") {
+      setAltKeyDown(true);
+    }
+  }
+
+  // Event handler for keyup events
+  function handleKeyUp(event) {
+    console.log({ event });
+    // If the shift key is released, update the state
+    if (event.key === "Alt") {
+      setAltKeyDown(false);
+    }
+  }
+
+  // detect if shift key is being held down
+
   const handleClose = () => {
     setModalStatus(false);
+    setAddEventModalStatus(false);
+    setViewEventModalStatus(false);
     setEditStatus(false);
     setEventInput("");
   };
@@ -55,32 +86,27 @@ const BasicCalendar = () => {
     setEventInput(e.target.value);
   };
 
-  const handleSave = (
-    start,
-    end,
-    title,
-    jobName,
-    client,
-    employee,
-    timeAllocated
-  ) => {
+  const handleSave = (start, end, jobName, client, employee, timeAllocated) => {
     // POST data to airTable
-    addJobToTable(
+    console.log("handleSave");
+    console.log({
       start,
       end,
-      title,
       jobName,
       client,
       employee,
-      timeAllocated
-    ).then((_) => {
-      fetchEvents().then((updatedEvents) => {
-        setEvents([...updatedEvents]);
-        setModalStatus(false);
-      });
-
-      //setEvents((events) => [...events, addedEvent]);
+      timeAllocated,
     });
+    addJobToTable(start, end, jobName, client, employee, timeAllocated).then(
+      (_) => {
+        fetchEvents().then((updatedEvents) => {
+          setEvents([...updatedEvents]);
+          setAddEventModalStatus(false);
+        });
+
+        //setEvents((events) => [...events, addedEvent]);
+      }
+    );
   };
 
   const handleEditEvent = (e) => {
@@ -129,25 +155,40 @@ const BasicCalendar = () => {
   const handleSlotSelectEvent = (slotInfo) => {
     setStartDate(new Date(`${slotInfo.start}`));
     setEndDate(new Date(`${slotInfo.end}`));
-    setModalStatus(true);
+    setAddEventModalStatus(true);
     setEventInput("");
   };
 
+  /*
+start,
+    end,
+    title,
+    jobName,
+    client,
+    employee,
+    timeAllocated
+  */
+
   //move event handler
   const moveEventHandler = ({ event, start, end }) => {
-    let updatedEvents = [];
-    updatedEvents = events.filter((e) => {
-      return e.id !== event.id;
-    });
-    setEvents([
-      ...updatedEvents,
-      {
-        id: `${event.id}`,
-        title: `${event.title}`,
-        start: new Date(`${start}`),
-        end: new Date(`${end}`),
-      },
-    ]);
+    // let updatedEvents = [];
+    // updatedEvents = events.filter((e) => {
+    //   return e.id !== event.id;
+    // });
+    let { jobName, client, employee, timeAllocated } = event;
+    console.log({ event });
+    if (altKeyDown) {
+      console.log("save it!");
+      handleSave(
+        start.toLocaleDateString(),
+        end.toLocaleDateString(),
+        jobName,
+        client.id,
+        employee.id,
+        timeAllocated
+      );
+      // setEvents([...events, eventDuplicate]);
+    }
   };
 
   //resize event handler
@@ -169,12 +210,14 @@ const BasicCalendar = () => {
 
   //on select event handler
   const hanldeOnSelectEvent = (e) => {
-    setEditStatus(true);
+    //setEditStatus(true);
     setStartDate(new Date(`${e.start}`));
     setEndDate(new Date(`${e.end}`));
-    setEventInput(e.title);
+    //setEventInput(e.title);
     setEventId(e.id);
-    setModalStatus(true);
+    console.log(`selected event: ${e}`);
+    //setModalStatus(true);
+    setViewEventModalStatus(true);
   };
 
   // console.log("events: ", events);
@@ -191,9 +234,14 @@ const BasicCalendar = () => {
 
   return (
     <div className="my-calendar">
-      <Calendar
+      <div>
+        {/* Display a message indicating whether the shift key is being held down or not */}
+        <p>Alt key is {altKeyDown ? "down" : "up"}</p>
+      </div>
+      <DnDCalendar
         localizer={localizer}
         events={events}
+        views={["month"]}
         startAccessor="start"
         endAccessor={(e) => {
           if (!e) return "end";
@@ -210,12 +258,12 @@ const BasicCalendar = () => {
         //event for drag and drop
         onEventDrop={moveEventHandler}
         //event trigger hen resizing any event
-        resizable
+        resizable={false}
         onEventResize={resizeEventHandler}
         // onSelecting={slot => false}
         longPressThreshold={10}
       />
-      <MyModal
+      {/* <MyModal
         modalStatus={modalStatus}
         handleClose={handleClose}
         handleSave={handleSave}
@@ -230,6 +278,22 @@ const BasicCalendar = () => {
         handleDelete={handleDelete}
         clients={clients}
         employees={employees}
+      /> */}
+      <AddEventModal
+        addEventModalStatus={addEventModalStatus}
+        handleClose={handleClose}
+        handleSave={handleSave}
+        startDate={startDate}
+        endDate={endDate}
+        clients={clients}
+        employees={employees}
+      />
+      <ViewEventModal
+        viewEventModalStatus={viewEventModalStatus}
+        handleClose={handleClose}
+        startDate={startDate}
+        endDate={endDate}
+        event={selectedEvent}
       />
     </div>
   );
