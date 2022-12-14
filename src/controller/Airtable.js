@@ -1,4 +1,9 @@
 import axios from "axios";
+import Airtable from "airtable";
+
+var base = new Airtable({ apiKey: process.env.REACT_APP_API_KEY }).base(
+  "appZSbj9h1nqMu4gX"
+);
 
 export function fetchEvents() {
   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
@@ -35,6 +40,18 @@ export function fetchEvents() {
     });
   });
 }
+
+export const fetchTimeTrackingInfoByJobId = async (jobId) => {
+  const records = await base(
+    process.env.REACT_APP_TIME_TRACKING_TABLE_ID
+  ).select({
+    // Selecting the first 3 records in Grid view:
+    view: "Grid view",
+    filterByFormula: `{job} = "${jobId}"`,
+  });
+
+  return records;
+};
 
 export function fetchClients() {
   const clientsTableId = process.env.REACT_APP_CLIENTS_TABLE_ID;
@@ -91,6 +108,8 @@ export const addJobToTable = (
   employee,
   timeAllocated
 ) => {
+  console.log(`addJobToTable`);
+  console.log({ start, end, jobName, client, employee, timeAllocated });
   const job = {
     fields: {
       job_name: jobName,
@@ -102,6 +121,7 @@ export const addJobToTable = (
       employee: [employee],
     },
   };
+  console.log({ job });
   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
   return axios({
     method: "post",
@@ -124,6 +144,27 @@ export const addJobToTable = (
   //   return formattedEvent;
   //   fetchEvents();
   // });
+};
+
+export const addTimeToTimeTrackingTable = (jobId, date, hours) => {
+  const timeToAdd = {
+    fields: {
+      created_at: new Date(),
+      date_of_work: date,
+      hours: 5,
+      job: [jobId],
+    },
+  };
+  console.log({ timeToAdd });
+  const timeTrackingTableId = process.env.REACT_APP_TIME_TRACKING_TABLE_ID;
+  return axios({
+    method: "post",
+    url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${timeTrackingTableId}`,
+    headers: {
+      authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+    },
+    data: timeToAdd,
+  });
 };
 
 export const editJobInTable = (
