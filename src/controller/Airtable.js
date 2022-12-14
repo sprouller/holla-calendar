@@ -12,6 +12,8 @@ export async function fetchSprints() {
       view: "Grid view",
     })
     .all();
+  console.log("airtable");
+  console.log({ sprints });
   return sprints.map((sprint) => {
     let sprintObj = {
       id: sprint.get("id"),
@@ -63,6 +65,30 @@ export async function fetchClients() {
   });
 }
 
+export async function fetchWorkItemsByJobId(jobId) {
+  const workItemsTableId = process.env.REACT_APP_WORK_ITEMS_TABLE_ID;
+  const workItems = await base(workItemsTableId)
+    .select({
+      filterByFormula: `{Jobs (from sprint)} = '${jobId}'`,
+    })
+    .all();
+  console.log("Airtable");
+  console.log({ workItems });
+  return workItems.map((workItem) => {
+    return {
+      id: workItem.get("id"),
+      dateOfWork: workItem.get("date_of_work"),
+      hours: workItem.get("hours"),
+      employee: {
+        id: workItem.get("Employees (from sprint)")[0],
+        firstName: workItem.get("first_name (from Employees) (from sprint)")[0],
+        surname: workItem.get("surname (from Employees) (from sprint)")[0],
+        colour: workItem.get("colour (from Employees) (from sprint)")[0],
+      },
+    };
+  });
+}
+
 export async function addJobAndSprintToAirtable(job, sprint) {
   let { jobName, clientId, timeAllocated } = job;
   let { employeeId, start, end } = sprint;
@@ -91,53 +117,53 @@ export async function addJobAndSprintToAirtable(job, sprint) {
   }
 }
 
-export function fetchEvents() {
-  const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
-  return axios({
-    method: "get",
-    url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${jobsTableId}`,
-    headers: {
-      authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-    },
-  }).then((response) => {
-    const fetchedEvents = response.data.records;
+// export function fetchEvents() {
+//   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
+//   return axios({
+//     method: "get",
+//     url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${jobsTableId}`,
+//     headers: {
+//       authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+//     },
+//   }).then((response) => {
+//     const fetchedEvents = response.data.records;
 
-    return fetchedEvents.map((event) => {
-      const { client_name, job_name, employee_first_name } = event.fields;
-      const displayTitle = `Client: ${client_name} | Job: ${job_name} | ${employee_first_name}`;
-      return {
-        id: event.id,
-        title: displayTitle,
-        start: event.fields.start_date,
-        end: event.fields.end_date,
-        allDay: true,
-        jobName: event.fields.job_name,
-        client: {
-          id: event.fields.client[0],
-          name: event.fields.client_name[0],
-        },
-        employee: {
-          id: event.fields.employee[0],
-          firstName: event.fields.employee_first_name[0],
-          surname: event.fields.employee_surname[0],
-        },
-        timeAllocated: event.fields.time_allocated,
-      };
-    });
-  });
-}
+//     return fetchedEvents.map((event) => {
+//       const { client_name, job_name, employee_first_name } = event.fields;
+//       const displayTitle = `Client: ${client_name} | Job: ${job_name} | ${employee_first_name}`;
+//       return {
+//         id: event.id,
+//         title: displayTitle,
+//         start: event.fields.start_date,
+//         end: event.fields.end_date,
+//         allDay: true,
+//         jobName: event.fields.job_name,
+//         client: {
+//           id: event.fields.client[0],
+//           name: event.fields.client_name[0],
+//         },
+//         employee: {
+//           id: event.fields.employee[0],
+//           firstName: event.fields.employee_first_name[0],
+//           surname: event.fields.employee_surname[0],
+//         },
+//         timeAllocated: event.fields.time_allocated,
+//       };
+//     });
+//   });
+// }
 
-export const fetchTimeTrackingInfoByJobId = async (jobId) => {
-  const records = await base(
-    process.env.REACT_APP_TIME_TRACKING_TABLE_ID
-  ).select({
-    // Selecting the first 3 records in Grid view:
-    view: "Grid view",
-    filterByFormula: `{job} = "${jobId}"`,
-  });
+// export const fetchTimeTrackingInfoByJobId = async (jobId) => {
+//   const records = await base(
+//     process.env.REACT_APP_TIME_TRACKING_TABLE_ID
+//   ).select({
+//     // Selecting the first 3 records in Grid view:
+//     view: "Grid view",
+//     filterByFormula: `{job} = "${jobId}"`,
+//   });
 
-  return records;
-};
+//   return records;
+// };
 
 // export function fetchClients() {
 //   const clientsTableId = process.env.REACT_APP_CLIENTS_TABLE_ID;
@@ -230,6 +256,23 @@ export const addJobToTable = (
   //   return formattedEvent;
   //   fetchEvents();
   // });
+};
+
+export const addWorkItemToAirtable = async (sprintId, date, hours) => {
+  const workItemToAdd = {
+    date_of_work: date,
+    hours: hours,
+    sprint: [sprintId],
+  };
+  base(process.env.REACT_APP_WORK_ITEMS_TABLE_ID).create(
+    workItemToAdd,
+    function (err, record) {
+      if (err) {
+        console.error(err);
+        return;
+      }
+    }
+  );
 };
 
 export const addTimeToTimeTrackingTable = (jobId, date, hours) => {

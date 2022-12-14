@@ -4,7 +4,7 @@ import "moment-timezone";
 import { useState } from "react";
 import MyModal from "./MyModal";
 import AddEventModal from "./AddEventModal";
-import ViewEventModal from "./ViewEventModal";
+import ViewSprintModal from "./ViewSprintModal";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { useEffect } from "react";
 import {
@@ -34,13 +34,13 @@ const BasicCalendar = () => {
 
   //states for creating event
   const [addEventModalStatus, setAddEventModalStatus] = useState(false);
-  const [viewEventModalStatus, setViewEventModalStatus] = useState(false);
+  const [viewSprintModalStatus, setViewSprintModalStatus] = useState(false);
   const [modalStatus, setModalStatus] = useState(false);
   const [eventInput, setEventInput] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   //state for on select event
-  const [eventId, setEventId] = useState("");
+  const [sprintId, setSprintId] = useState("");
   const [editStatus, setEditStatus] = useState(false);
   const [altKeyDown, setAltKeyDown] = useState(false);
 
@@ -87,7 +87,7 @@ const BasicCalendar = () => {
   const handleClose = () => {
     setModalStatus(false);
     setAddEventModalStatus(false);
-    setViewEventModalStatus(false);
+    setViewSprintModalStatus(false);
     setEditStatus(false);
     setEventInput("");
   };
@@ -110,76 +110,64 @@ const BasicCalendar = () => {
     // setEventInput(e.target.value);
   };
 
-  const handleSave = (start, end, jobName, client, employee, timeAllocated) => {
-    // POST data to airTable
-    console.log("handleSave");
-    console.log({
-      start,
-      end,
-      jobName,
-      client,
-      employee,
-      timeAllocated,
-    });
-    addJobToTable(start, end, jobName, client, employee, timeAllocated).then(
-      (_) => {
-        fetchEvents().then((updatedEvents) => {
-          setEvents([...updatedEvents]);
-          setAddEventModalStatus(false);
-        });
-        //setEvents((events) => [...events, addedEvent]);
-      }
-    );
-  };
-
-  const handleAddTimeToJob = (jobId, date, hours) => {
-    console.log("handleAddTimeToJob");
-    console.log({ jobId, date, hours });
-    addTimeToTimeTrackingTable(jobId, date, hours).then((_) => {
-      // fetchEvents().then((updatedEvents) => {
-      //   setEvents([...updatedEvents]);
-      //   setAddEventModalStatus(false);
-      // });
-      console.log("finished adding time");
-    });
-  };
+  // const handleSave = (start, end, jobName, client, employee, timeAllocated) => {
+  //   // POST data to airTable
+  //   console.log("handleSave");
+  //   console.log({
+  //     start,
+  //     end,
+  //     jobName,
+  //     client,
+  //     employee,
+  //     timeAllocated,
+  //   });
+  //   addJobToTable(start, end, jobName, client, employee, timeAllocated).then(
+  //     (_) => {
+  //       fetchEvents().then((updatedEvents) => {
+  //         setEvents([...updatedEvents]);
+  //         setAddEventModalStatus(false);
+  //       });
+  //       //setEvents((events) => [...events, addedEvent]);
+  //     }
+  //   );
+  // };
 
   // handles editing an event
-  const handleEdited = (
-    start,
-    end,
-    jobName,
-    client,
-    employee,
-    timeAllocated
-  ) => {
-    editJobInTable(
-      eventId,
-      start,
-      end,
-      jobName,
-      client,
-      employee,
-      timeAllocated
-    ).then((_) => {
-      fetchEvents().then((updatedEvents) => {
-        setEvents([...updatedEvents]);
-        setModalStatus(false);
-        setEditStatus(false);
-        setEventInput("");
-      });
-    });
-  };
+  // const handleEdited = (
+  //   start,
+  //   end,
+  //   jobName,
+  //   client,
+  //   employee,
+  //   timeAllocated
+  // ) => {
+  //   editJobInTable(
+  //     sprintId,
+  //     start,
+  //     end,
+  //     jobName,
+  //     client,
+  //     employee,
+  //     timeAllocated
+  //   ).then((_) => {
+  //     fetchEvents().then((updatedEvents) => {
+  //       setEvents([...updatedEvents]);
+  //       setModalStatus(false);
+  //       setEditStatus(false);
+  //       setEventInput("");
+  //     });
+  //   });
+  // };
 
   // handles deleting an event
   const handleDelete = () => {
-    deleteJobFromTable(eventId).then((_) => {
-      fetchEvents().then((updatedEvents) => {
-        setEvents([...updatedEvents]);
-        setModalStatus(false);
-        setEditStatus(false);
-        setEventInput("");
-      });
+    deleteJobFromTable(sprintId).then((_) => {
+      // fetchEvents().then((updatedEvents) => {
+      //   setEvents([...updatedEvents]);
+      //   setModalStatus(false);
+      //   setEditStatus(false);
+      //   setEventInput("");
+      // });
     });
   };
 
@@ -201,14 +189,14 @@ const BasicCalendar = () => {
     console.log({ event });
     if (altKeyDown) {
       console.log("save it!");
-      handleSave(
-        start.toLocaleDateString(),
-        end.toLocaleDateString(),
-        jobName,
-        client.id,
-        employee.id,
-        timeAllocated
-      );
+      // handleSave(
+      //   start.toLocaleDateString(),
+      //   end.toLocaleDateString(),
+      //   jobName,
+      //   client.id,
+      //   employee.id,
+      //   timeAllocated
+      // );
     }
   };
 
@@ -235,23 +223,22 @@ const BasicCalendar = () => {
     setStartDate(new Date(`${e.start}`));
     setEndDate(new Date(`${e.end}`));
     //setEventInput(e.title);
-    setEventId(e.id);
-    console.log(`selected event: ${e}`);
+    setSprintId(e.id);
     //setModalStatus(true);
-    setViewEventModalStatus(true);
+    setViewSprintModalStatus(true);
   };
 
   // console.log("events: ", events);
   // console.log("clients: ", clients);
   // console.log("employees: ", employees);
 
-  const selectedEvent =
-    events.length &&
-    events.find((event) => {
-      return event.id === eventId;
+  const selectedSprint =
+    sprints.length &&
+    sprints.find((sprint) => {
+      return sprint.id === sprintId;
     });
 
-  console.log("events: ", events);
+  console.log({ selectedSprint });
 
   return (
     <div className="my-calendar">
@@ -284,38 +271,20 @@ const BasicCalendar = () => {
         // onSelecting={slot => false}
         longPressThreshold={10}
       />
-      {/* <MyModal
-        modalStatus={modalStatus}
-        handleClose={handleClose}
-        handleSave={handleSave}
-        handleChange={handleChange}
-        startDate={startDate}
-        endDate={endDate}
-        eventInput={eventInput}
-        event={selectedEvent}
-        handleEditEvent={handleEditEvent}
-        handleEdited={handleEdited}
-        editStatus={editStatus}
-        handleDelete={handleDelete}
-        clients={clients}
-        employees={employees}
-      /> */}
       <AddEventModal
         addEventModalStatus={addEventModalStatus}
-        handleClose={handleClose}
-        handleSave={handleSave}
         startDate={startDate}
         endDate={endDate}
         clients={clients}
         employees={employees}
+        handleClose={handleClose}
         handleScheduleJob={handleScheduleJob}
       />
-      <ViewEventModal
-        viewEventModalStatus={viewEventModalStatus}
-        handleClose={handleClose}
-        event={selectedEvent}
+      <ViewSprintModal
+        viewSprintModalStatus={viewSprintModalStatus}
+        sprint={selectedSprint}
         employees={employees}
-        handleAddTimeToJob={handleAddTimeToJob}
+        handleClose={handleClose}
       />
     </div>
   );
