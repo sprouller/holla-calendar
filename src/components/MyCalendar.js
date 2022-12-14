@@ -8,6 +8,7 @@ import ViewEventModal from "./ViewEventModal";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { useEffect } from "react";
 import {
+  addJobAndSprintToAirtable,
   addJobToTable,
   addTimeToTimeTrackingTable,
   deleteJobFromTable,
@@ -15,6 +16,7 @@ import {
   fetchClients,
   fetchEmployees,
   fetchEvents,
+  fetchSprints,
   fetchTimeTrackingInfoByJobId,
 } from "../controller/Airtable";
 
@@ -25,6 +27,7 @@ const DnDCalendar = withDragAndDrop(Calendar);
 
 // react BasicCalendar component
 const BasicCalendar = () => {
+  const [sprints, setSprints] = useState([]);
   const [events, setEvents] = useState([]);
   const [clients, setClients] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -42,16 +45,23 @@ const BasicCalendar = () => {
   const [altKeyDown, setAltKeyDown] = useState(false);
 
   useEffect(() => {
-    fetchEvents().then((eventsFromAirtable) => {
-      setEvents(...events, eventsFromAirtable);
+    // fetchEvents().then((eventsFromAirtable) => {
+    //   setEvents(...events, eventsFromAirtable);
+    // });
+    fetchSprints().then((sprintsFromAirtable) => {
+      setSprints(sprintsFromAirtable);
     });
     fetchClients().then((clientsFromAirtable) => {
-      setClients(...clients, clientsFromAirtable);
+      setClients(clientsFromAirtable);
     });
     fetchEmployees().then((employeesFromAirtable) => {
-      setEmployees(...employees, employeesFromAirtable);
+      setEmployees(employeesFromAirtable);
     });
   }, []);
+
+  console.log({ sprints });
+  console.log({ employees });
+  console.log({ clients });
 
   // Attach event listeners to the window object to listen for keydown and keyup events
   window.addEventListener("keydown", handleKeyDown);
@@ -88,6 +98,16 @@ const BasicCalendar = () => {
 
   const handleEditEvent = (e) => {
     setEventInput(e.target.value);
+  };
+
+  const handleScheduleJob = async (job, sprint) => {
+    console.log("handleScheduleJob");
+    console.log({ sprint, job });
+    await addJobAndSprintToAirtable(job, sprint);
+    fetchSprints().then((sprintsFromAirtable) => {
+      setSprints(sprintsFromAirtable);
+    });
+    // setEventInput(e.target.value);
   };
 
   const handleSave = (start, end, jobName, client, employee, timeAllocated) => {
@@ -241,7 +261,7 @@ const BasicCalendar = () => {
       </div>
       <DnDCalendar
         localizer={localizer}
-        events={events}
+        events={sprints}
         views={["month"]}
         startAccessor="start"
         endAccessor={(e) => {
@@ -288,6 +308,7 @@ const BasicCalendar = () => {
         endDate={endDate}
         clients={clients}
         employees={employees}
+        handleScheduleJob={handleScheduleJob}
       />
       <ViewEventModal
         viewEventModalStatus={viewEventModalStatus}

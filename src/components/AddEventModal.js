@@ -10,19 +10,21 @@ import { Col, Row } from "react-bootstrap";
 
 function AddEventModal({
   addEventModalStatus,
-  handleClose,
-  handleSave,
+
   startDate,
   endDate,
   clients,
   employees,
+  handleClose,
+  handleSave,
+  handleScheduleJob,
 }) {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [jobName, setJobName] = useState("");
-  const [client, setClient] = useState("");
+  const [clientId, setClientId] = useState("");
   const [timeAllocated, setTimeAllocated] = useState(0);
-  const [employee, setEmployee] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
   const [description, setDescription] = useState("");
   const [thirdPartyItem, setThirdPartyItem] = useState("");
   const [thirdPartyCost, setThirdPartyCost] = useState(0);
@@ -71,7 +73,7 @@ function AddEventModal({
                   <Form.Select
                     required
                     onChange={(e) => {
-                      setClient(e.target.value);
+                      setClientId(e.target.value);
                     }}
                     aria-label="Assign to Client"
                   >
@@ -93,7 +95,7 @@ function AddEventModal({
                   <Form.Select
                     disabled
                     onChange={(e) => {
-                      setClient(e.target.value);
+                      //   setClient(e.target.value);
                     }}
                     aria-label="Assign to Sub Brand"
                   >
@@ -185,7 +187,7 @@ function AddEventModal({
                   <Form.Select
                     defaultValue={""}
                     onChange={(e) => {
-                      setEmployee(e.target.value);
+                      setEmployeeId(e.target.value);
                     }}
                     aria-label="Select Employee"
                   >
@@ -194,7 +196,7 @@ function AddEventModal({
                       employees.map((employee) => {
                         return (
                           <option key={employee.id} value={employee.id}>
-                            {`${employee.first_name} ${employee.surname}`}
+                            {`${employee.firstName} ${employee.surname}`}
                           </option>
                         );
                       })}
@@ -206,6 +208,7 @@ function AddEventModal({
               <Form.Group className="mb-3" controlId="descriptionInputAdd">
                 <Form.Label>Description</Form.Label>
                 <Form.Control
+                  disabled
                   type="text"
                   as="textarea"
                   style={{ height: "100px" }}
@@ -249,23 +252,33 @@ function AddEventModal({
           <Button
             variant="success"
             onClick={() => {
-              handleSave(
-                // convertDateForAirtable(start).toLocaleDateString(),
-                // convertDateForAirtable(end).toLocaleDateString(),
+              //   handleSave(
+              //     // convertDateForAirtable(start).toLocaleDateString(),
+              //     // convertDateForAirtable(end).toLocaleDateString(),
+              //     start,
+              //     end,
+              //     jobName,
+              //     client,
+              //     employee,
+              //     timeAllocated
+              //   );
+              const sprint = {
                 start,
                 end,
+                employeeId,
+              };
+              const job = {
                 jobName,
-                client,
-                employee,
-                timeAllocated
-              );
+                clientId,
+                timeAllocated: parseInt(timeAllocated, 10),
+              };
+              handleScheduleJob(job, sprint);
               setStart("");
               setEnd("");
               setJobName("");
               setTimeAllocated(0);
               setDescription("");
             }}
-            style={{ boxShadow: "none" }}
           >
             Add Job
           </Button>
