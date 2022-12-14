@@ -15,6 +15,7 @@ import {
   fetchTimeTrackingInfoByJobId,
   fetchWorkItemsByJobId,
 } from "../controller/Airtable";
+import moment from "moment-timezone";
 
 function ViewSprintModal({
   viewSprintModalStatus,
@@ -41,6 +42,10 @@ function ViewSprintModal({
     });
   }, [sprint]);
 
+  const getUTCDate = (date) => {
+    return moment.utc(date).format("MM/DD/YYYY");
+  };
+
   if (!sprint) {
     console.log("no sprint!");
     return (
@@ -55,9 +60,12 @@ function ViewSprintModal({
     console.log({ sprintId, date, hours });
     await addWorkItemToAirtable(sprintId, date, hours);
     fetchWorkItemsByJobId(sprint.job.id).then((workItems) => {
+      console.log("setting work items");
       setworkItems(workItems);
+      console.log({ workItems });
     });
   };
+  console.log("render");
 
   return (
     <>
@@ -238,9 +246,7 @@ function ViewSprintModal({
                         gap={4}
                       >
                         <strong>{workItem.employee.firstName}: </strong>
-                        <div>
-                          {new Date(workItem.dateOfWork).toLocaleDateString()}
-                        </div>
+                        <div>{getUTCDate(workItem.dateOfWork)}</div>
                         <div>{workItem.hours} hours</div>
                         <CloseButton />
                       </Stack>

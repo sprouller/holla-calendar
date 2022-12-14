@@ -264,15 +264,15 @@ export const addWorkItemToAirtable = async (sprintId, date, hours) => {
     hours: hours,
     sprint: [sprintId],
   };
-  base(process.env.REACT_APP_WORK_ITEMS_TABLE_ID).create(
-    workItemToAdd,
-    function (err, record) {
-      if (err) {
-        console.error(err);
-        return;
-      }
-    }
-  );
+  try {
+    let createdWorkItem = await base(
+      process.env.REACT_APP_WORK_ITEMS_TABLE_ID
+    ).create(workItemToAdd);
+    console.log({ createdWorkItem });
+    return createdWorkItem;
+  } catch (error) {
+    console.log({ error });
+  }
 };
 
 export const addTimeToTimeTrackingTable = (jobId, date, hours) => {
