@@ -210,7 +210,12 @@ function ViewEventModal({
                 <Col>
                   <Stack direction="horizontal" gap={2}>
                     <strong>Time Worked: </strong>
-                    <div>XX hours</div>
+                    <div>
+                      {timeTrackingLineItems.reduce((acc, val) => {
+                        return acc + val.hours;
+                      }, 0)}{" "}
+                      hours
+                    </div>
                   </Stack>
                   <Stack direction="horizontal" gap={2}>
                     <strong>Time Allocated: </strong>
