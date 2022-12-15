@@ -1,4 +1,3 @@
-import axios from "axios";
 import Airtable from "airtable";
 
 var base = new Airtable({ apiKey: process.env.REACT_APP_API_KEY }).base(
@@ -15,10 +14,17 @@ export async function fetchSprints() {
   console.log("airtable");
   console.log({ sprints });
   return sprints.map((sprint) => {
+    let s = sprint.get("start_date");
+    let ds = new Date(s);
+    let e = sprint.get("end_date");
+    let de = new Date(e);
+    console.log(`UTC ${de}`);
+
     let sprintObj = {
+      allDay: true,
       id: sprint.get("id"),
-      start: sprint.get("start_date"),
-      end: sprint.get("end_date"),
+      start: ds.toUTCString(),
+      end: de.toUTCString(),
       title: "Default Title",
       employee: {
         id: sprint.get("Employees")[0],
@@ -28,7 +34,10 @@ export async function fetchSprints() {
       },
       job: {
         id: sprint.get("Jobs")[0],
-        name: sprint.get("job_name (from Jobs)")[0],
+        name:
+          sprint.get("job_name (from Jobs)") !== undefined
+            ? sprint.get("job_name (from Jobs)")[0]
+            : "",
         timeAllocated: sprint.get("time_allocated (from Jobs)")[0],
         client: {
           id: sprint.get("Clients (from Jobs)")[0],
