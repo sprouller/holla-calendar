@@ -117,147 +117,6 @@ export async function addJobAndSprintToAirtable(job, sprint) {
   }
 }
 
-// export function fetchEvents() {
-//   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
-//   return axios({
-//     method: "get",
-//     url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${jobsTableId}`,
-//     headers: {
-//       authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-//     },
-//   }).then((response) => {
-//     const fetchedEvents = response.data.records;
-
-//     return fetchedEvents.map((event) => {
-//       const { client_name, job_name, employee_first_name } = event.fields;
-//       const displayTitle = `Client: ${client_name} | Job: ${job_name} | ${employee_first_name}`;
-//       return {
-//         id: event.id,
-//         title: displayTitle,
-//         start: event.fields.start_date,
-//         end: event.fields.end_date,
-//         allDay: true,
-//         jobName: event.fields.job_name,
-//         client: {
-//           id: event.fields.client[0],
-//           name: event.fields.client_name[0],
-//         },
-//         employee: {
-//           id: event.fields.employee[0],
-//           firstName: event.fields.employee_first_name[0],
-//           surname: event.fields.employee_surname[0],
-//         },
-//         timeAllocated: event.fields.time_allocated,
-//       };
-//     });
-//   });
-// }
-
-// export const fetchTimeTrackingInfoByJobId = async (jobId) => {
-//   const records = await base(
-//     process.env.REACT_APP_TIME_TRACKING_TABLE_ID
-//   ).select({
-//     // Selecting the first 3 records in Grid view:
-//     view: "Grid view",
-//     filterByFormula: `{job} = "${jobId}"`,
-//   });
-
-//   return records;
-// };
-
-// export function fetchClients() {
-//   const clientsTableId = process.env.REACT_APP_CLIENTS_TABLE_ID;
-//   return axios({
-//     method: "get",
-//     url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${clientsTableId}`,
-//     headers: {
-//       authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-//     },
-//   }).then((response) => {
-//     const fetchedClients = response.data.records;
-
-//     return fetchedClients.map((client) => {
-//       const { name, client_since, jobs } = client.fields;
-//       return {
-//         id: client.id,
-//         name,
-//         jobs,
-//         client_since,
-//       };
-//     });
-//   });
-// }
-
-// export function fetchEmployees() {
-//   const employeesTableId = process.env.REACT_APP_EMPLOYEES_TABLE_ID;
-//   return axios({
-//     method: "get",
-//     url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${employeesTableId}`,
-//     headers: {
-//       authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-//     },
-//   }).then((response) => {
-//     const fetchedEmployees = response.data.records;
-
-//     return fetchedEmployees.map((employee) => {
-//       const { first_name, surname, colour, jobs } = employee.fields;
-//       return {
-//         id: employee.id,
-//         first_name,
-//         surname,
-//         colour,
-//         jobs,
-//       };
-//     });
-//   });
-// }
-
-export const addJobToTable = (
-  start,
-  end,
-  jobName,
-  client,
-  employee,
-  timeAllocated
-) => {
-  console.log(`addJobToTable`);
-  console.log({ start, end, jobName, client, employee, timeAllocated });
-  const job = {
-    fields: {
-      job_name: jobName,
-      client: [client],
-      start_date: start,
-      end_date: end,
-      time_allocated: parseInt(timeAllocated, 10),
-      status: "Closed",
-      employee: [employee],
-    },
-  };
-  console.log({ job });
-  const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
-  return axios({
-    method: "post",
-    url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${jobsTableId}`,
-    headers: {
-      authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-    },
-    data: job,
-  });
-  // .then((response) => {
-  //   const fetchedEvent = response.data;
-  //   const fields = fetchedEvent.fields;
-  //   const displayTitle = `Client: ${fields.client_name[0]} | Job: ${fields.job_name} | ${fields.employee_first_name[0]}`;
-  //   const formattedEvent = {
-  //     id: fetchedEvent.id,
-  //     title: displayTitle,
-  //     start: new Date(fetchedEvent.fields.start_date),
-  //     end: new Date(fetchedEvent.fields.end_date),
-  //   };
-  //   return formattedEvent;
-  //   fetchEvents();
-  // });
-};
-
 export const addWorkItemToAirtable = async (sprintId, date, hours) => {
   const workItemToAdd = {
     date_of_work: date,
@@ -275,58 +134,95 @@ export const addWorkItemToAirtable = async (sprintId, date, hours) => {
   }
 };
 
-export const addTimeToTimeTrackingTable = (jobId, date, hours) => {
-  const timeToAdd = {
-    fields: {
-      created_at: new Date(),
-      date_of_work: date,
-      hours: 5,
-      job: [jobId],
-    },
-  };
-  console.log({ timeToAdd });
-  const timeTrackingTableId = process.env.REACT_APP_TIME_TRACKING_TABLE_ID;
-  return axios({
-    method: "post",
-    url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${timeTrackingTableId}`,
-    headers: {
-      authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-    },
-    data: timeToAdd,
-  });
-};
+// export const addTimeToTimeTrackingTable = (jobId, date, hours) => {
+//   const timeToAdd = {
+//     fields: {
+//       created_at: new Date(),
+//       date_of_work: date,
+//       hours: 5,
+//       job: [jobId],
+//     },
+//   };
+//   console.log({ timeToAdd });
+//   const timeTrackingTableId = process.env.REACT_APP_TIME_TRACKING_TABLE_ID;
+//   return axios({
+//     method: "post",
+//     url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${timeTrackingTableId}`,
+//     headers: {
+//       authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+//     },
+//     data: timeToAdd,
+//   });
+// };
 
-export const editJobInTable = (
-  eventId,
-  start,
-  end,
-  jobName,
-  client,
-  employee,
-  timeAllocated
-) => {
-  const job = {
-    id: eventId,
+export const editSprintInTable = async (sprintData) => {
+  const { sprintId, start, end, employeeId } = sprintData;
+  const sprint = {
+    id: sprintId,
     fields: {
-      job_name: jobName,
-      client: [client],
       start_date: start,
       end_date: end,
-      time_allocated: parseInt(timeAllocated, 10),
-      //status: "Closed",
-      employee: [employee],
+      Employees: [employeeId],
+    },
+  };
+  const sprintsTableId = process.env.REACT_APP_SPRINTS_TABLE_ID;
+  try {
+    return await base(sprintsTableId).update(sprint.id, sprint.fields);
+  } catch (error) {
+    console.log({ error });
+  }
+};
+
+export const editJobInTable = async (jobData) => {
+  const { jobId, jobName, clientId, timeAllocated } = jobData;
+  const job = {
+    id: jobId,
+    fields: {
+      job_name: jobName,
+      time_allocated: timeAllocated,
+      status: "Closed",
+      Clients: [clientId],
     },
   };
   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
-  return axios({
-    method: "patch",
-    url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${jobsTableId}`,
-    headers: {
-      authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
-    },
-    data: { records: [job] },
-  });
+  try {
+    return await base(jobsTableId).update(job.id, job.fields);
+  } catch (error) {
+    console.log({ error });
+  }
 };
+
+// export const editJobInTable = (
+//   eventId,
+//   start,
+//   end,
+//   jobName,
+//   client,
+//   employee,
+//   timeAllocated
+// ) => {
+//   const job = {
+//     id: eventId,
+//     fields: {
+//       job_name: jobName,
+//       client: [client],
+//       start_date: start,
+//       end_date: end,
+//       time_allocated: parseInt(timeAllocated, 10),
+//       //status: "Closed",
+//       employee: [employee],
+//     },
+//   };
+//   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;
+//   return axios({
+//     method: "patch",
+//     url: `https://api.airtable.com/v0/appZSbj9h1nqMu4gX/${jobsTableId}`,
+//     headers: {
+//       authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+//     },
+//     data: { records: [job] },
+//   });
+// };
 
 export const deleteJobFromTable = (id) => {
   const jobsTableId = process.env.REACT_APP_JOBS_TABLE_ID;

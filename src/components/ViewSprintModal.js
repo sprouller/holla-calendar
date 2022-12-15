@@ -18,10 +18,10 @@ import {
 import moment from "moment-timezone";
 
 function ViewSprintModal({
-  viewSprintModalStatus,
+  modalState,
   handleClose,
   sprint,
-  clients,
+  setModalState,
   employees,
 }) {
   const [date, setDate] = useState(new Date().toLocaleDateString());
@@ -70,13 +70,14 @@ function ViewSprintModal({
   return (
     <>
       <Modal
-        show={viewSprintModalStatus}
+        show={modalState === "view-modal"}
         onHide={handleClose}
         centered
         className="view-sprint-modal"
       >
         <Modal.Header closeButton>
           <Modal.Title>{sprint.jobName}</Modal.Title>
+          <Button onClick={() => setModalState("edit-modal")}>Edit</Button>
         </Modal.Header>
         <Modal.Body>
           <Tabs
