@@ -252,16 +252,6 @@ function AddEventModal({
           <Button
             variant="success"
             onClick={() => {
-              //   handleSave(
-              //     // convertDateForAirtable(start).toLocaleDateString(),
-              //     // convertDateForAirtable(end).toLocaleDateString(),
-              //     start,
-              //     end,
-              //     jobName,
-              //     client,
-              //     employee,
-              //     timeAllocated
-              //   );
               const sprint = {
                 start,
                 end,

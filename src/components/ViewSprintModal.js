@@ -59,10 +59,14 @@ function ViewSprintModal({
   const handleAddWorkItem = async (sprintId, date, hours) => {
     console.log("handleAddWorkItem");
     console.log({ sprintId, date, hours });
-    await addWorkItemToAirtable(sprintId, date, hours);
-    fetchWorkItemsByJobId(sprint.job.id).then((workItems) => {
-      setworkItems(workItems);
-    });
+    try {
+      await addWorkItemToAirtable(sprintId, date, hours);
+      fetchWorkItemsByJobId(sprint.job.id).then((workItems) => {
+        setworkItems(workItems);
+      });
+    } catch (error) {
+      console.log({ error });
+    }
   };
 
   const handleDeleteWorkItem = async (workItemId) => {
@@ -208,7 +212,7 @@ function ViewSprintModal({
                       <Form.Control
                         type="number"
                         defaultValue={0}
-                        onChange={(e) => setHours(parseInt(e.target.value), 0)}
+                        onChange={(e) => setHours(parseInt(e.target.value, 10))}
                         placeholder={0}
                         min={0}
                       />

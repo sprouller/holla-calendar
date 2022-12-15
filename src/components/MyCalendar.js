@@ -16,9 +16,7 @@ import {
   editSprintInTable,
   fetchClients,
   fetchEmployees,
-  fetchEvents,
   fetchSprints,
-  fetchTimeTrackingInfoByJobId,
 } from "../controller/Airtable";
 
 // moment.tz.setDefault("Etc/GMT");
@@ -29,7 +27,6 @@ const DnDCalendar = withDragAndDrop(Calendar);
 // react BasicCalendar component
 const BasicCalendar = () => {
   const [sprints, setSprints] = useState([]);
-  const [events, setEvents] = useState([]);
   const [clients, setClients] = useState([]);
   const [employees, setEmployees] = useState([]);
 
@@ -39,7 +36,6 @@ const BasicCalendar = () => {
   const [endDate, setEndDate] = useState("");
   //state for on select event
   const [sprintId, setSprintId] = useState("");
-  const [editStatus, setEditStatus] = useState(false);
   const [altKeyDown, setAltKeyDown] = useState(false);
 
   useEffect(() => {

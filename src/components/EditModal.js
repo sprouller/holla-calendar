@@ -11,13 +11,9 @@ import { Col, Row } from "react-bootstrap";
 function EditModal({
   modalState,
   sprint,
-  startDate,
-  endDate,
   clients,
   employees,
   setModalState,
-  handleClose,
-  handleScheduleJob,
   handleEditSprintAndJob,
 }) {
   const [start, setStart] = useState("");

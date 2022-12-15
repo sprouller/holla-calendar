@@ -19,4 +19,4 @@ add a .env and link up airtable info
 [ ] Week view not working?
 [ ] Investigate default client and employee on add
 [ ] Error handling
-[ ] Investigate Work Item Employee changing based on editing sprint employee
+[ ] Work Item Employee changes based on employee assigned to the sprint.
