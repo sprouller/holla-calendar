@@ -61,9 +61,9 @@ function ViewSprintModal({
     console.log({ sprintId, date, hours });
     try {
       await addWorkItemToAirtable(sprintId, date, hours);
-      fetchWorkItemsByJobId(sprint.job.id).then((workItems) => {
-        setworkItems(workItems);
-      });
+      const workItems = await fetchWorkItemsByJobId(sprint.job.id);
+      setworkItems(workItems);
+      setHours(0); // not working
     } catch (error) {
       console.log({ error });
     }
@@ -212,7 +212,10 @@ function ViewSprintModal({
                       <Form.Control
                         type="number"
                         defaultValue={0}
-                        onChange={(e) => setHours(parseInt(e.target.value, 10))}
+                        onChange={(e) => {
+                          let h = parseInt(e.target.value, 10);
+                          setHours(h);
+                        }}
                         placeholder={0}
                         min={0}
                       />
