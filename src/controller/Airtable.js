@@ -205,3 +205,12 @@ export const deleteJobFromTable = async (id) => {
     console.log({ error });
   }
 };
+
+export const deleteWorkItemFromTable = async (id) => {
+  const workItemsTableId = process.env.REACT_APP_WORK_ITEMS_TABLE_ID;
+  try {
+    return await base(workItemsTableId).destroy(id);
+  } catch (error) {
+    console.log({ error });
+  }
+};

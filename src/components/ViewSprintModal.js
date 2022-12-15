@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { Alert } from "react-bootstrap";
 import {
   addWorkItemToAirtable,
+  deleteWorkItemFromTable,
   fetchWorkItemsByJobId,
 } from "../controller/Airtable";
 import moment from "moment-timezone";
@@ -60,12 +61,18 @@ function ViewSprintModal({
     console.log({ sprintId, date, hours });
     await addWorkItemToAirtable(sprintId, date, hours);
     fetchWorkItemsByJobId(sprint.job.id).then((workItems) => {
-      console.log("setting work items");
       setworkItems(workItems);
-      console.log({ workItems });
     });
   };
-  console.log("render");
+
+  const handleDeleteWorkItem = async (workItemId) => {
+    console.log("handleDeleteWorkItem");
+    console.log({ workItemId });
+    await deleteWorkItemFromTable(workItemId);
+    fetchWorkItemsByJobId(sprint.job.id).then((workItems) => {
+      setworkItems(workItems);
+    });
+  };
 
   return (
     <>
@@ -248,7 +255,9 @@ function ViewSprintModal({
                         <strong>{workItem.employee.firstName}: </strong>
                         <div>{getUTCDate(workItem.dateOfWork)}</div>
                         <div>{workItem.hours} hours</div>
-                        <CloseButton />
+                        <CloseButton
+                          onClick={() => handleDeleteWorkItem(workItem.id)}
+                        />
                       </Stack>
                     );
                   })}
