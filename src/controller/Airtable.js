@@ -19,6 +19,7 @@ export async function fetchSprints() {
     let e = sprint.get("end_date");
     let de = new Date(e);
     console.log(`UTC ${de}`);
+
     let sprintObj = {
       allDay: true,
       id: sprint.get("id"),
@@ -33,7 +34,10 @@ export async function fetchSprints() {
       },
       job: {
         id: sprint.get("Jobs")[0],
-        name: sprint.get("job_name (from Jobs)")[0],
+        name:
+          sprint.get("job_name (from Jobs)") !== undefined
+            ? sprint.get("job_name (from Jobs)")[0]
+            : "",
         timeAllocated: sprint.get("time_allocated (from Jobs)")[0],
         client: {
           id: sprint.get("Clients (from Jobs)")[0],
