@@ -1,7 +1,7 @@
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import { useState } from "react";
 import moment from "moment";
-//import "moment-timezone";
+import moment_timezone from "moment-timezone";
 import AddEventModal from "./AddEventModal";
 import ViewSprintModal from "./ViewSprintModal";
 import EditModal from "./EditModal";
@@ -19,8 +19,9 @@ import {
   fetchSprints,
 } from "../controller/Airtable";
 
-// moment.tz.setDefault("Etc/GMT");
-const localizer = momentLocalizer(moment);
+moment_timezone.tz.setDefault("Etc/GMT");
+const localizer = momentLocalizer(moment_timezone);
+localizer.segmentOffset = 0;
 
 const DnDCalendar = withDragAndDrop(Calendar);
 
@@ -50,7 +51,7 @@ const BasicCalendar = () => {
     });
   }, []);
 
-  // console.log({ sprints });
+  console.log({ sprints });
   // console.log({ employees });
   // console.log({ clients });
 
@@ -131,8 +132,8 @@ const BasicCalendar = () => {
   };
 
   //move event handler
-  const moveEventHandler = async ({ event, start, end }) => {
-    let sprint = event;
+  const moveEventHandler = async ({ event: sprint, start, end }) => {
+    // let sprint = event;
     let sprintId = sprint.id;
     console.log({ sprint });
     let sprintData = {
@@ -203,14 +204,27 @@ const BasicCalendar = () => {
         localizer={localizer}
         events={sprints}
         views={["month"]}
-        startAccessor="start"
-        endAccessor={(e) => {
-          if (!e) return "end";
-          const addOneDay = new Date();
-          addOneDay.setDate(new Date(e.end).getDate() + 1);
-          return addOneDay;
+        startAccessor={(e) => {
+          let startDate = new Date(e.start);
+          return startDate.toUTCString();
+          // if (!e) return "start";
+          // console.log({ e });
+          // let startDate = new Date(e.start);
+          // console.log({ startDate });
+          // return startDate;
         }}
-        allDayAccessor={true}
+        endAccessor={(e) => {
+          let endDate = new Date(e.end);
+          //addOneDay.setDate(addOneDay.getDate() + 1);
+          return endDate.toUTCString();
+          //return endDate;
+          // if (!e) return "end";
+          // const addOneDay = new Date();
+          // let endDate = new Date(e.end);
+          // addOneDay.setDate(endDate.getDate() + 1);
+          // return addOneDay;
+        }}
+        allDayAccessor="allDay"
         selectable
         onSelectSlot={handleSlotSelectEvent}
         onSelectEvent={hanldeOnSelectEvent}

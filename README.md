@@ -20,3 +20,7 @@ add a .env and link up airtable info
 [ ] Investigate default client and employee on add
 [ ] Error handling
 [ ] Work Item Employee changes based on employee assigned to the sprint.
+[ ] Work Item hours not resetting.
+[ ] Drag and Drop is off by one day
+[ ] End date is off by one day.
+[ ] No rounded corners on end of week.
