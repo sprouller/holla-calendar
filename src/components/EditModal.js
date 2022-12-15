@@ -8,16 +8,13 @@ import Modal from "react-bootstrap/Modal";
 import { useEffect } from "react";
 import { Col, Row } from "react-bootstrap";
 
-function AddEventModal({
-  addEventModalStatus,
+function EditModal({
   modalState,
-  startDate,
-  endDate,
+  sprint,
   clients,
   employees,
-  handleClose,
-  handleSave,
-  handleScheduleJob,
+  setModalState,
+  handleEditSprintAndJob,
 }) {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -30,51 +27,59 @@ function AddEventModal({
   const [thirdPartyCost, setThirdPartyCost] = useState(0);
 
   useEffect(() => {
+    if (!sprint) return;
     setStart(getStartDateText());
     setEnd(getEndDateText());
-  }, [startDate, endDate]);
-
-  //   console.log({ startDate });
-  //   console.log({ start });
+    setJobName(sprint.job.name);
+    setClientId(sprint.job.client.id);
+    setTimeAllocated(sprint.job.timeAllocated);
+    setEmployeeId(sprint.employee.id);
+  }, [sprint]);
 
   const getStartDateText = () => {
-    return moment.utc(startDate).format("MM/DD/YYYY");
+    return moment.utc(sprint.start).format("MM/DD/YYYY");
   };
 
   const getEndDateText = () => {
-    return moment.utc(endDate).format("MM/DD/YYYY");
+    return moment.utc(sprint.end).format("MM/DD/YYYY");
   };
 
-  //   const convertDateForAirtable = (dateStrDDMMYYYY) => {
-  //     var dateParts = dateStrDDMMYYYY.split("/");
-  //     // month is 0-based, that's why we need dataParts[1] - 1
-  //     var dateObject = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
-  //     return dateObject;
-  //   };
+  console.log({ clients });
 
-  addEventModalStatus && console.log("render");
+  if (!sprint) {
+    console.log("no sprint!");
+    return (
+      <>
+        <Modal>No Sprint Data</Modal>
+      </>
+    );
+  }
+
+  console.log({ end });
+
   return (
     <>
       <Modal
-        show={modalState === "add-modal"}
-        onHide={handleClose}
+        show={modalState === "edit-modal"}
+        onHide={() => setModalState("view-modal")}
         centered
-        className="add-event-modal"
+        className="edit-event-modal"
       >
         <Modal.Header closeButton>
-          <Modal.Title>{"Schedule A Job"}</Modal.Title>
+          <Modal.Title>{"Edit"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Row>
               <Col>
-                <Form.Group className="mb-3" controlId="clientInputAdd">
+                <Form.Group className="mb-3" controlId="clientInputEdit">
                   <Form.Label>Client</Form.Label>
                   <Form.Select
                     required
                     onChange={(e) => {
                       setClientId(e.target.value);
                     }}
+                    defaultValue={sprint.job.client.id}
                     aria-label="Assign to Client"
                   >
                     <option>Select Client</option>
@@ -132,7 +137,9 @@ function AddEventModal({
                   <Form.Label>End Date</Form.Label>
                   <Form.Control
                     type="text"
-                    onChange={(e) => setEnd(e.target.value)}
+                    onChange={(e) => {
+                      setEnd(e.target.value);
+                    }}
                     onFocus={(e) => (e.target.type = "date")}
                     defaultValue={getEndDateText()}
                     placeholder={getEndDateText()}
@@ -159,7 +166,7 @@ function AddEventModal({
                   <Form.Control
                     type="text"
                     onChange={(e) => setJobName(e.target.value)}
-                    defaultValue={""}
+                    defaultValue={sprint.job.name}
                     placeholder={"Job Name"}
                   />
                 </Form.Group>
@@ -171,7 +178,7 @@ function AddEventModal({
                   <Form.Label> Estimated Time Allocated</Form.Label>
                   <Form.Control
                     type="number"
-                    defaultValue={0}
+                    defaultValue={sprint.job.timeAllocated}
                     onChange={(e) => setTimeAllocated(e.target.value)}
                     placeholder={"5"}
                     min={0}
@@ -185,7 +192,7 @@ function AddEventModal({
                 >
                   <Form.Label>Assign to Employee</Form.Label>
                   <Form.Select
-                    defaultValue={""}
+                    defaultValue={sprint.employee.id}
                     onChange={(e) => {
                       setEmployeeId(e.target.value);
                     }}
@@ -252,17 +259,19 @@ function AddEventModal({
           <Button
             variant="success"
             onClick={() => {
-              const sprint = {
-                start,
-                end,
+              const sprintData = {
+                sprintId: sprint.id,
+                start_date: start,
+                end_date: end,
                 employeeId,
               };
-              const job = {
+              const jobData = {
+                jobId: sprint.job.id,
                 jobName,
                 clientId,
                 timeAllocated: parseInt(timeAllocated, 10),
               };
-              handleScheduleJob(job, sprint);
+              handleEditSprintAndJob(sprintData, jobData);
               setStart("");
               setEnd("");
               setJobName("");
@@ -270,7 +279,7 @@ function AddEventModal({
               setDescription("");
             }}
           >
-            Add Job
+            Save
           </Button>
         </Modal.Footer>
       </Modal>
@@ -278,4 +287,4 @@ function AddEventModal({
   );
 }
 
-export default AddEventModal;
+export default EditModal;

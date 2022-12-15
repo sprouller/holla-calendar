@@ -10,78 +10,98 @@ import Stack from "react-bootstrap/Stack";
 import CloseButton from "react-bootstrap/CloseButton";
 import { useEffect } from "react";
 import { Alert } from "react-bootstrap";
-import { fetchTimeTrackingInfoByJobId } from "../controller/Airtable";
+import {
+  addWorkItemToAirtable,
+  deleteWorkItemFromTable,
+  fetchWorkItemsByJobId,
+} from "../controller/Airtable";
+import moment from "moment-timezone";
 
-function ViewEventModal({
-  viewEventModalStatus,
+function ViewSprintModal({
+  modalState,
   handleClose,
-  event,
-  handleAddTimeToJob,
-  clients,
+  sprint,
+  setModalState,
   employees,
+  handleDeleteSprint,
 }) {
   const [date, setDate] = useState(new Date().toLocaleDateString());
   const [hours, setHours] = useState(0);
-  const [employee, setEmployee] = useState((event && event.employee) || "");
-  const [timeTrackingLineItems, setTimeTrackingLineItems] = useState([]);
+  const [employee, setEmployee] = useState(
+    (sprint && sprint.employee.id) || ""
+  );
+  const [workItems, setworkItems] = useState([]);
 
   useEffect(() => {
-    if (!event) return;
-    console.log("called set Employee event is ", event);
-    setEmployee((event && event.employee) || "");
-
-    console.log(`fetching timeTrack records for job ${event.id}`);
-    fetchTimeTrackingInfoByJobId(event.id).then((response) => {
-      console.log(`event.id: ${event.id}`);
-      response.eachPage((records, fetchNextPage) => {
-        console.log("Page of records: ", records);
-        const timeTrackingRecords = records.map((record) => {
-          return {
-            employee_first_name: record.fields.employee_first_name_from_job[0],
-            date_of_work: record.fields.date_of_work,
-            hours: record.fields.hours,
-          };
-        });
-        setTimeTrackingLineItems(timeTrackingRecords);
-        //fetchNextPage();
-      });
+    if (!sprint) return;
+    console.log({ sprint });
+    setEmployee((sprint && sprint.employee.id) || "");
+    console.log(`fetching timeTrack records for job ${sprint.job.id}`);
+    fetchWorkItemsByJobId(sprint.job.id).then((workItems) => {
+      console.log({ workItems });
+      setworkItems(workItems);
     });
-  }, [event]);
+  }, [sprint]);
 
-  console.log({ timeTrackingLineItems });
+  const getUTCDate = (date) => {
+    return moment.utc(date).format("MM/DD/YYYY");
+  };
 
-  if (!event)
+  if (!sprint) {
+    console.log("no sprint!");
     return (
       <>
-        <Modal>No Job Data</Modal>
+        <Modal>No Sprint Data</Modal>
       </>
     );
+  }
 
-  console.log({ event });
+  const handleAddWorkItem = async (sprintId, date, hours) => {
+    console.log("handleAddWorkItem");
+    console.log({ sprintId, date, hours });
+    try {
+      await addWorkItemToAirtable(sprintId, date, hours);
+      const workItems = await fetchWorkItemsByJobId(sprint.job.id);
+      setworkItems(workItems);
+      setHours(0); // not working
+    } catch (error) {
+      console.log({ error });
+    }
+  };
+
+  const handleDeleteWorkItem = async (workItemId) => {
+    console.log("handleDeleteWorkItem");
+    console.log({ workItemId });
+    await deleteWorkItemFromTable(workItemId);
+    fetchWorkItemsByJobId(sprint.job.id).then((workItems) => {
+      setworkItems(workItems);
+    });
+  };
 
   return (
     <>
       <Modal
-        show={viewEventModalStatus}
+        show={modalState === "view-modal"}
         onHide={handleClose}
         centered
-        className="view-event-modal"
+        className="view-sprint-modal"
       >
         <Modal.Header closeButton>
-          <Modal.Title>{event.jobName}</Modal.Title>
+          <Modal.Title>{sprint.job.name}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Tabs
             defaultActiveKey="jobInformation"
-            id="view-event-modal-tabs"
+            id="view-sprint-modal-tabs"
             className="mb-3"
           >
+            {/* Job Info Tab */}
             <Tab eventKey="jobInformation" title="Job Information">
               <Row className="mb-2">
                 <Col>
                   <Stack direction="horizontal" gap={2}>
                     <strong>Client: </strong>
-                    <div>{event.client.name}</div>
+                    <div>{sprint.job.client.name}</div>
                   </Stack>
                 </Col>
                 <Col>
@@ -101,7 +121,7 @@ function ViewEventModal({
                 <Col>
                   <Stack direction="horizontal" gap={2}>
                     <strong>Job Name:</strong>
-                    <div>{event.jobName}</div>
+                    <div>{sprint.job.name}</div>
                   </Stack>
                 </Col>
               </Row>
@@ -110,13 +130,13 @@ function ViewEventModal({
                 <Col>
                   <Stack direction="horizontal" gap={2}>
                     <strong>Date From: </strong>
-                    <div>{event.start}</div>
+                    <div>{sprint.start}</div>
                   </Stack>
                 </Col>
                 <Col>
                   <Stack direction="horizontal" gap={2}>
                     <strong>Date To:</strong>
-                    <div>{event.end}</div>
+                    <div>{sprint.end}</div>
                   </Stack>
                 </Col>
               </Row>
@@ -124,13 +144,13 @@ function ViewEventModal({
                 <Col>
                   <Stack direction="horizontal" gap={2}>
                     <strong>Time Allocated: </strong>
-                    <div>{event.timeAllocated} hours</div>
+                    <div>{sprint.job.timeAllocated} hours</div>
                   </Stack>
                 </Col>
                 <Col>
                   <Stack direction="horizontal" gap={2}>
                     <strong>Employee:</strong>
-                    <div>{event.employee.firstName}</div>
+                    <div>{sprint.employee.firstName}</div>
                   </Stack>
                 </Col>
               </Row>
@@ -140,8 +160,10 @@ function ViewEventModal({
                 </Alert>
               </Row>
             </Tab>
+            {/* Time Tracking Tab */}
             <Tab eventKey="timeTracking" title="Time Tracking">
               <Row>
+                {/* Add Work Item Form */}
                 <Col>
                   <Form>
                     <Form.Group
@@ -153,7 +175,7 @@ function ViewEventModal({
                       </Form.Label>
                       <Form.Select
                         disabled
-                        defaultValue={event.employee.id}
+                        defaultValue={sprint.employee.id}
                         onChange={(e) => {
                           setEmployee(e.target.value);
                         }}
@@ -163,7 +185,7 @@ function ViewEventModal({
                           employees.map((employee) => {
                             return (
                               <option key={employee.id} value={employee.id}>
-                                {`${employee.first_name} ${employee.surname}`}
+                                {`${employee.firstName} ${employee.surname}`}
                               </option>
                             );
                           })}
@@ -190,7 +212,10 @@ function ViewEventModal({
                       <Form.Control
                         type="number"
                         defaultValue={0}
-                        onChange={(e) => setHours(e.target.value)}
+                        onChange={(e) => {
+                          let h = parseInt(e.target.value, 10);
+                          setHours(h);
+                        }}
                         placeholder={0}
                         min={0}
                       />
@@ -200,7 +225,7 @@ function ViewEventModal({
                   <Button
                     variant="success"
                     onClick={() => {
-                      handleAddTimeToJob(event.id, date, hours);
+                      handleAddWorkItem(sprint.id, date, hours);
                     }}
                   >
                     Add Time
@@ -211,7 +236,7 @@ function ViewEventModal({
                   <Stack direction="horizontal" gap={2}>
                     <strong>Time Worked: </strong>
                     <div>
-                      {timeTrackingLineItems.reduce((acc, val) => {
+                      {workItems.reduce((acc, val) => {
                         return acc + val.hours;
                       }, 0)}{" "}
                       hours
@@ -219,22 +244,27 @@ function ViewEventModal({
                   </Stack>
                   <Stack direction="horizontal" gap={2}>
                     <strong>Time Allocated: </strong>
-                    <div>{event.timeAllocated} hours</div>
+                    <div>{sprint.job.timeAllocated} hours</div>
                   </Stack>
                 </Col>
               </Row>
               <hr></hr>
               <Row>
-                {timeTrackingLineItems &&
-                  timeTrackingLineItems.map((lineItem) => {
+                {workItems &&
+                  workItems.map((workItem) => {
                     return (
-                      <Stack className="mb-2" direction="horizontal" gap={4}>
-                        <strong>{lineItem.employee_first_name}: </strong>
-                        <div>
-                          {new Date(lineItem.date_of_work).toLocaleDateString()}
-                        </div>
-                        <div>{lineItem.hours} hours</div>
-                        <CloseButton />
+                      <Stack
+                        key={workItem.id}
+                        className="mb-2"
+                        direction="horizontal"
+                        gap={4}
+                      >
+                        <strong>{workItem.employee.firstName}: </strong>
+                        <div>{getUTCDate(workItem.dateOfWork)}</div>
+                        <div>{workItem.hours} hours</div>
+                        <CloseButton
+                          onClick={() => handleDeleteWorkItem(workItem.id)}
+                        />
                       </Stack>
                     );
                   })}
@@ -242,9 +272,23 @@ function ViewEventModal({
             </Tab>
           </Tabs>
         </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setModalState("edit-modal")}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => handleDeleteSprint(sprint.id)}
+          >
+            <i className="fi fi-rr-trash"></i>
+          </Button>
+        </Modal.Footer>
       </Modal>
     </>
   );
 }
 
-export default ViewEventModal;
+export default ViewSprintModal;
