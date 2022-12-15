@@ -265,8 +265,8 @@ function EditModal({
             onClick={() => {
               const sprintData = {
                 sprintId: sprint.id,
-                start,
-                end,
+                start_date: start,
+                end_date: end,
                 employeeId,
               };
               const jobData = {

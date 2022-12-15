@@ -1,8 +1,7 @@
 import { Calendar, momentLocalizer } from "react-big-calendar";
-import moment from "moment";
-import "moment-timezone";
 import { useState } from "react";
-import MyModal from "./MyModal";
+import moment from "moment";
+//import "moment-timezone";
 import AddEventModal from "./AddEventModal";
 import ViewSprintModal from "./ViewSprintModal";
 import EditModal from "./EditModal";
@@ -10,7 +9,9 @@ import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { useEffect } from "react";
 import {
   addJobAndSprintToAirtable,
+  addSprintToExistingJobInTable,
   deleteJobFromTable,
+  deleteSprintFromTable,
   editJobInTable,
   editSprintInTable,
   fetchClients,
@@ -33,12 +34,7 @@ const BasicCalendar = () => {
   const [employees, setEmployees] = useState([]);
 
   //states for creating event
-  const [addEventModalStatus, setAddEventModalStatus] = useState(false);
-  const [viewSprintModalStatus, setViewSprintModalStatus] = useState(false);
-  const [editModalStatus, setEditModalStatus] = useState(false);
   const [modalState, setModalState] = useState(false);
-  const [modalStatus, setModalStatus] = useState(false);
-  const [eventInput, setEventInput] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   //state for on select event
@@ -47,9 +43,6 @@ const BasicCalendar = () => {
   const [altKeyDown, setAltKeyDown] = useState(false);
 
   useEffect(() => {
-    // fetchEvents().then((eventsFromAirtable) => {
-    //   setEvents(...events, eventsFromAirtable);
-    // });
     fetchSprints().then((sprintsFromAirtable) => {
       setSprints(sprintsFromAirtable);
     });
@@ -61,9 +54,9 @@ const BasicCalendar = () => {
     });
   }, []);
 
-  console.log({ sprints });
-  console.log({ employees });
-  console.log({ clients });
+  // console.log({ sprints });
+  // console.log({ employees });
+  // console.log({ clients });
 
   // Attach event listeners to the window object to listen for keydown and keyup events
   window.addEventListener("keydown", handleKeyDown);
@@ -90,20 +83,13 @@ const BasicCalendar = () => {
     setModalState("close");
   };
 
-  // const handleChange = (e) => {
-  //   setEventInput(e.target.value);
-  // };
-
-  // const handleEditEvent = (e) => {
-  //   setEventInput(e.target.value);
-  // };
-
   const handleScheduleJob = async (job, sprint) => {
     console.log("handleScheduleJob");
     console.log({ sprint, job });
     await addJobAndSprintToAirtable(job, sprint);
     fetchSprints().then((sprintsFromAirtable) => {
       setSprints(sprintsFromAirtable);
+      setModalState("close");
     });
   };
 
@@ -118,76 +104,90 @@ const BasicCalendar = () => {
     });
   };
 
-  // handles deleting an event
-  const handleDelete = () => {
-    deleteJobFromTable(sprintId).then((_) => {
-      // fetchEvents().then((updatedEvents) => {
-      //   setEvents([...updatedEvents]);
-      //   setModalStatus(false);
-      //   setEditStatus(false);
-      //   setEventInput("");
-      // });
-    });
+  const handleDeleteSprint = async (sprintId) => {
+    let jobId = selectedSprint.job.id;
+    let shouldDeleteJob = false;
+    if (sprints.filter((sprint) => sprint.job.id === jobId).length <= 1) {
+      alert(
+        "This is the last sprint in the job. Deleting this sprint also deletes the job."
+      );
+      shouldDeleteJob = true;
+    }
+    try {
+      await deleteSprintFromTable(sprintId);
+      if (shouldDeleteJob) {
+        await deleteJobFromTable(jobId);
+      }
+      fetchSprints().then(async (sprintsFromAirtable) => {
+        setSprints(sprintsFromAirtable);
+        setModalState("close");
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   // handles when a day is clicked (without event)
   const handleSlotSelectEvent = (slotInfo) => {
     setStartDate(new Date(`${slotInfo.start}`));
     setEndDate(new Date(`${slotInfo.end}`));
-    setAddEventModalStatus(true);
     setModalState("add-modal");
-    setEventInput("");
   };
 
   //move event handler
-  const moveEventHandler = ({ event, start, end }) => {
-    // let updatedEvents = [];
-    // updatedEvents = events.filter((e) => {
-    //   return e.id !== event.id;
-    // });
-    let { jobName, client, employee, timeAllocated } = event;
-    console.log({ event });
-    if (altKeyDown) {
-      console.log("save it!");
-      // handleSave(
-      //   start.toLocaleDateString(),
-      //   end.toLocaleDateString(),
-      //   jobName,
-      //   client.id,
-      //   employee.id,
-      //   timeAllocated
-      // );
+  const moveEventHandler = async ({ event, start, end }) => {
+    let sprint = event;
+    let sprintId = sprint.id;
+    console.log({ sprint });
+    let sprintData = {
+      sprintId,
+      start_date: start.toLocaleDateString(),
+      end_date: end.toLocaleDateString(),
+      employeeId: sprint.employee.id,
+    };
+    try {
+      if (altKeyDown) {
+        console.log("dnd sprint duplicate!");
+        await addSprintToExistingJobInTable(sprintData, sprint.job.id);
+      } else {
+        console.log("dnd sprint edit!");
+        const tempSprints = sprints.filter((sprint) => sprint.id !== sprintId);
+        setSprints(tempSprints);
+        await editSprintInTable(sprintData);
+      }
+    } catch (error) {
+      console.error(error);
     }
+    fetchSprints().then(async (sprintsFromAirtable) => {
+      setSprints(sprintsFromAirtable);
+    });
   };
 
   //resize event handler
-  const resizeEventHandler = ({ event, start, end }) => {
-    let updatedEvents = [];
-    updatedEvents = events.filter((e) => {
-      return e.id !== event.id;
-    });
-    setEvents([
-      ...updatedEvents,
-      {
-        id: `${event.id}`,
-        title: `${event.title}`,
-        start: new Date(`${start}`),
-        end: new Date(`${end}`),
-      },
-    ]);
-  };
+  // const resizeEventHandler = ({ event, start, end }) => {
+  //   let updatedEvents = [];
+  //   updatedEvents = events.filter((e) => {
+  //     return e.id !== event.id;
+  //   });
+  //   setEvents([
+  //     ...updatedEvents,
+  //     {
+  //       id: `${event.id}`,
+  //       title: `${event.title}`,
+  //       start: new Date(`${start}`),
+  //       end: new Date(`${end}`),
+  //     },
+  //   ]);
+  // };
 
   //on select event handler
   const hanldeOnSelectEvent = (e) => {
+    console.log({ e });
     setStartDate(new Date(`${e.start}`));
     setEndDate(new Date(`${e.end}`));
     setSprintId(e.id);
     setModalState("view-modal");
   };
-
-  // console.log("events: ", events);
-  // console.log("clients: ", clients);
-  // console.log("employees: ", employees);
 
   const selectedSprint =
     sprints.length &&
@@ -196,7 +196,6 @@ const BasicCalendar = () => {
     });
 
   console.log({ selectedSprint });
-  console.log({ editModalStatus });
 
   return (
     <div className="my-calendar">
@@ -217,20 +216,15 @@ const BasicCalendar = () => {
         }}
         allDayAccessor={true}
         selectable
-        //event trigger after clicking any slot
         onSelectSlot={handleSlotSelectEvent}
-        //event trigger after clicking any event
         onSelectEvent={hanldeOnSelectEvent}
-        //event for drag and drop
         onEventDrop={moveEventHandler}
-        //event trigger hen resizing any event
         resizable={false}
-        onEventResize={resizeEventHandler}
+        // onEventResize={resizeEventHandler}
         // onSelecting={slot => false}
         longPressThreshold={10}
       />
       <AddEventModal
-        addEventModalStatus={addEventModalStatus}
         modalState={modalState}
         startDate={startDate}
         endDate={endDate}
@@ -245,6 +239,7 @@ const BasicCalendar = () => {
         employees={employees}
         setModalState={setModalState}
         handleClose={handleClose}
+        handleDeleteSprint={handleDeleteSprint}
       />
       <EditModal
         modalState={modalState}

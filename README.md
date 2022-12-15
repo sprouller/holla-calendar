@@ -17,3 +17,5 @@ add a .env and link up airtable info
 [X] editStatus does not reset once you've clicked in to editing an event. I.e. once you try to edit an event you can no longer create a new event. \
 [X] timezones mess up so added events show up one day later than the day you actually add them \
 [ ] Week view not working?
+[ ] Investigate default client and employee on add
+[ ] Error handling

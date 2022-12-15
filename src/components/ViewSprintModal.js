@@ -12,7 +12,6 @@ import { useEffect } from "react";
 import { Alert } from "react-bootstrap";
 import {
   addWorkItemToAirtable,
-  fetchTimeTrackingInfoByJobId,
   fetchWorkItemsByJobId,
 } from "../controller/Airtable";
 import moment from "moment-timezone";
@@ -23,6 +22,7 @@ function ViewSprintModal({
   sprint,
   setModalState,
   employees,
+  handleDeleteSprint,
 }) {
   const [date, setDate] = useState(new Date().toLocaleDateString());
   const [hours, setHours] = useState(0);
@@ -76,8 +76,7 @@ function ViewSprintModal({
         className="view-sprint-modal"
       >
         <Modal.Header closeButton>
-          <Modal.Title>{sprint.jobName}</Modal.Title>
-          <Button onClick={() => setModalState("edit-modal")}>Edit</Button>
+          <Modal.Title>{sprint.job.name}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Tabs
@@ -257,6 +256,20 @@ function ViewSprintModal({
             </Tab>
           </Tabs>
         </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setModalState("edit-modal")}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => handleDeleteSprint(sprint.id)}
+          >
+            <i className="fi fi-rr-trash"></i>
+          </Button>
+        </Modal.Footer>
       </Modal>
     </>
   );
