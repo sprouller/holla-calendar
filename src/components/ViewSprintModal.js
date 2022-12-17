@@ -211,12 +211,13 @@ function ViewSprintModal({
                       </Form.Label>
                       <Form.Control
                         type="number"
-                        defaultValue={0}
+                        defaultValue={hours}
                         onChange={(e) => {
                           let h = parseInt(e.target.value, 10);
                           setHours(h);
                         }}
-                        placeholder={0}
+                        value={hours}
+                        placeholder={hours}
                         min={0}
                       />
                     </Form.Group>
